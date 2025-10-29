@@ -2,10 +2,10 @@ provider "aws" {
   region = var.region
 }
 
-module "vpc" {
-  source = "../../../modules/vpc"
+module "networking" {
+  source = "../../../modules/networking"
 
-  name                = "walkai-prod-vpc"
+  name                = "walkai-prod-networking"
   vpc_cidr            = "10.0.0.0/16"
   public_subnet_cidr  = "10.0.1.0/24"
   public_subnet_az    = "us-east-1a"
