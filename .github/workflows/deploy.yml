@@ -38,19 +38,7 @@ jobs:
 
       - name: Terraform init
         working-directory: envs/prod/networking
-        run: terraform init -input=false
-
-      - name: Select workspace
-        working-directory: envs/prod/networking
-        run: |
-          terraform workspace select prod || terraform workspace new prod
-
-      - name: Show workspace and state
-        working-directory: envs/prod/networking
-        run: |
-          terraform workspace show
-          terraform state list || true
-          aws s3 ls s3://walkai-terraform-state/prod/networking/terraform.tfstate || true
+        run: terraform init -input=false -reconfigure
 
       - name: Terraform apply
         if: env.TERRAFORM_ACTION == 'apply'
