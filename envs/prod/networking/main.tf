@@ -13,7 +13,6 @@ module "networking" {
       name                   = "walkai-public-subnet-a-az"
       cidr_block             = "172.31.96.0/20"
       availability_zone      = "us-east-1a"
-      availability_zone_id   = "use1-az1"
       public                 = true
       map_public_ip_on_launch = true
     }
@@ -21,14 +20,12 @@ module "networking" {
       name                 = "walkai-private-subnet-a-az"
       cidr_block           = "172.31.0.0/20"
       availability_zone    = "us-east-1a"
-      availability_zone_id = "use1-az1"
       public               = false
     }
     public_b = {
       name                   = "walkai-public-subnet-b-az"
       cidr_block             = "172.31.112.0/20"
       availability_zone      = "us-east-1b"
-      availability_zone_id   = "use1-az2"
       public                 = true
       map_public_ip_on_launch = true
     }
@@ -36,7 +33,6 @@ module "networking" {
       name                 = "walkai-private-subnet-b-az"
       cidr_block           = "172.31.80.0/20"
       availability_zone    = "us-east-1b"
-      availability_zone_id = "use1-az2"
       public               = false
     }
   }

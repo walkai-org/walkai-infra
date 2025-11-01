@@ -14,7 +14,6 @@ variable "subnets" {
     name                   = string
     cidr_block             = string
     availability_zone      = string
-    availability_zone_id   = optional(string)
     public                 = bool
     map_public_ip_on_launch = optional(bool)
   }))
