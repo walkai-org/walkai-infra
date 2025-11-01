@@ -23,10 +23,6 @@ jobs:
     env:
       S3_BUCKET: ${{ vars.AWS_S3_BUCKET }}
       TERRAFORM_ACTION: ${{ github.event_name == 'workflow_dispatch' && github.event.inputs.terraform_action || 'apply' }}
-      TF_BACKEND_BUCKET: ${{ vars.TF_BACKEND_BUCKET || 'walkai-terraform-state' }}
-      TF_BACKEND_KEY: ${{ vars.TF_BACKEND_KEY || 'prod/networking/terraform.tfstate' }}
-      TF_BACKEND_REGION: ${{ vars.TF_BACKEND_REGION || vars.AWS_REGION }}
-      TF_BACKEND_LOCK_TABLE: ${{ vars.TF_BACKEND_LOCK_TABLE || 'walkai-terraform-locks' }}
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
@@ -42,12 +38,7 @@ jobs:
 
       - name: Terraform init
         working-directory: envs/prod/networking
-        run: |
-          terraform init -input=false \
-            -backend-config="bucket=${TF_BACKEND_BUCKET}" \
-            -backend-config="key=${TF_BACKEND_KEY}" \
-            -backend-config="region=${TF_BACKEND_REGION}" \
-            -backend-config="encrypt=true"
+        run: terraform init -input=false -upgrade
 
       - name: Terraform apply
         if: env.TERRAFORM_ACTION == 'apply'
@@ -56,7 +47,7 @@ jobs:
 
       - name: Terraform destroy
         if: env.TERRAFORM_ACTION == 'destroy'
-        # working-directory: envs/prod/networking
+        working-directory: envs/prod/networking
         run: terraform destroy -auto-approve -input=false
 
       - name: Sync repository to S3 (site bucket)
