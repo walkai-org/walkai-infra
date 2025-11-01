@@ -56,7 +56,7 @@ jobs:
 
       - name: Terraform destroy
         if: env.TERRAFORM_ACTION == 'destroy'
-        working-directory: envs/prod/networking
+        # working-directory: envs/prod/networking
         run: terraform destroy -auto-approve -input=false
 
       - name: Sync repository to S3 (site bucket)
