@@ -13,6 +13,11 @@ output "public_route_table_id" {
   value       = aws_route_table.public.id
 }
 
+output "private_route_table_id" {
+  description = "Identifier of the private main route table."
+  value       = aws_route_table.private.id
+}
+
 output "subnet_ids" {
   description = "Identifiers for the created subnets keyed by logical name."
   value       = { for key, subnet in aws_subnet.subnets : key => subnet.id }

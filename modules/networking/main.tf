@@ -12,7 +12,8 @@ resource "aws_vpc" "this" {
 }
 
 locals {
-  public_subnet_keys = [for key, subnet in var.subnets : key if subnet.public]
+  public_subnet_keys  = [for key, subnet in var.subnets : key if subnet.public]
+  private_subnet_keys = [for key, subnet in var.subnets : key if !subnet.public]
 }
 
 resource "aws_internet_gateway" "this" {
@@ -22,6 +23,17 @@ resource "aws_internet_gateway" "this" {
     var.tags,
     {
       Name = "${var.name}-igw"
+    }
+  )
+}
+
+resource "aws_route_table" "private" {
+  vpc_id = aws_vpc.this.id
+
+  tags = merge(
+    var.tags,
+    {
+      Name = "private-rtb"
     }
   )
 }
@@ -42,9 +54,9 @@ resource "aws_route_table" "public" {
   )
 }
 
-resource "aws_main_route_table_association" "public" {
+resource "aws_main_route_table_association" "private" {
   vpc_id         = aws_vpc.this.id
-  route_table_id = aws_route_table.public.id
+  route_table_id = aws_route_table.private.id
 }
 
 resource "aws_route_table_association" "public" {
