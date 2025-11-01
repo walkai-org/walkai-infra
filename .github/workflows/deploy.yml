@@ -36,6 +36,14 @@ jobs:
       - name: Set up Terraform
         uses: hashicorp/setup-terraform@v3
 
+      - name: Debug workspace info
+        run: |
+          echo "Current working directory: $(pwd)"
+          echo "Listing repo root:"
+          ls -al
+          echo "Listing envs/prod/networking:"
+          ls -al envs/prod/networking || echo "Directory not found"
+
       - name: Terraform init
         working-directory: envs/prod/networking
         run: terraform init -input=false -upgrade
