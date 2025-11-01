@@ -48,6 +48,12 @@ jobs:
         working-directory: envs/prod/networking
         run: terraform init -input=false -upgrade
 
+      - name: Terraform state debug
+        working-directory: envs/prod/networking
+        run: |
+          terraform workspace show
+          terraform state list || echo "No resources currently in state"
+
       - name: Terraform apply
         if: env.TERRAFORM_ACTION == 'apply'
         working-directory: envs/prod/networking
