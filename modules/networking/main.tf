@@ -59,6 +59,36 @@ resource "aws_main_route_table_association" "private" {
   route_table_id = aws_route_table.private.id
 }
 
+resource "aws_vpc_endpoint" "s3" {
+  vpc_id            = aws_vpc.this.id
+  service_name      = "com.amazonaws.${var.region}.s3"
+  vpc_endpoint_type = "Gateway"
+
+  route_table_ids = [aws_route_table.private.id]
+
+  tags = merge(
+    var.tags,
+    {
+      Name = "ecs-private-tasks-s3-gateway"
+    }
+  )
+}
+
+resource "aws_vpc_endpoint" "dynamodb" {
+  vpc_id            = aws_vpc.this.id
+  service_name      = "com.amazonaws.${var.region}.dynamodb"
+  vpc_endpoint_type = "Gateway"
+
+  route_table_ids = [aws_route_table.private.id]
+
+  tags = merge(
+    var.tags,
+    {
+      Name = "ecs-private-tasks-dynamodb-gateway"
+    }
+  )
+}
+
 resource "aws_route_table_association" "public" {
   for_each       = toset(local.public_subnet_keys)
   subnet_id      = aws_subnet.subnets[each.key].id

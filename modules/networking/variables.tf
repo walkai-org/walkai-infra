@@ -8,6 +8,11 @@ variable "vpc_cidr" {
   type        = string
 }
 
+variable "region" {
+  description = "AWS region where networking resources are provisioned."
+  type        = string
+}
+
 variable "subnets" {
   description = "Map of subnet definitions keyed by logical identifier."
   type = map(object({

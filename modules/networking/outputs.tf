@@ -18,6 +18,16 @@ output "private_route_table_id" {
   value       = aws_route_table.private.id
 }
 
+output "s3_gateway_endpoint_id" {
+  description = "Identifier of the S3 gateway VPC endpoint."
+  value       = aws_vpc_endpoint.s3.id
+}
+
+output "dynamodb_gateway_endpoint_id" {
+  description = "Identifier of the DynamoDB gateway VPC endpoint."
+  value       = aws_vpc_endpoint.dynamodb.id
+}
+
 output "subnet_ids" {
   description = "Identifiers for the created subnets keyed by logical name."
   value       = { for key, subnet in aws_subnet.subnets : key => subnet.id }

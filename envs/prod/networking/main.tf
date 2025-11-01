@@ -7,6 +7,7 @@ module "networking" {
 
   name     = "walkai-prod-networking"
   vpc_cidr = "172.31.0.0/16"
+  region   = var.region
 
   subnets = {
     public_a = {
