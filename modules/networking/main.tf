@@ -27,8 +27,8 @@ resource "aws_internet_gateway" "this" {
   )
 }
 
-resource "aws_route_table" "private" {
-  vpc_id = aws_vpc.this.id
+resource "aws_default_route_table" "this" {
+  default_route_table_id = aws_vpc.this.default_route_table_id
 
   tags = merge(
     var.tags,
@@ -54,17 +54,12 @@ resource "aws_route_table" "public" {
   )
 }
 
-resource "aws_main_route_table_association" "private" {
-  vpc_id         = aws_vpc.this.id
-  route_table_id = aws_route_table.private.id
-}
-
 resource "aws_vpc_endpoint" "s3" {
   vpc_id            = aws_vpc.this.id
   service_name      = "com.amazonaws.${var.region}.s3"
   vpc_endpoint_type = "Gateway"
 
-  route_table_ids = [aws_route_table.private.id]
+  route_table_ids = [aws_default_route_table.this.id]
 
   tags = merge(
     var.tags,
@@ -79,7 +74,7 @@ resource "aws_vpc_endpoint" "dynamodb" {
   service_name      = "com.amazonaws.${var.region}.dynamodb"
   vpc_endpoint_type = "Gateway"
 
-  route_table_ids = [aws_route_table.private.id]
+  route_table_ids = [aws_default_route_table.this.id]
 
   tags = merge(
     var.tags,
@@ -93,6 +88,12 @@ resource "aws_route_table_association" "public" {
   for_each       = toset(local.public_subnet_keys)
   subnet_id      = aws_subnet.subnets[each.key].id
   route_table_id = aws_route_table.public.id
+}
+
+resource "aws_route_table_association" "private" {
+  for_each       = toset(local.private_subnet_keys)
+  subnet_id      = aws_subnet.subnets[each.key].id
+  route_table_id = aws_default_route_table.this.id
 }
 
 resource "aws_subnet" "subnets" {
