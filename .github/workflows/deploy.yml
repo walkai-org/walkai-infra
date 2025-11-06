@@ -45,23 +45,23 @@ jobs:
           ls -al envs/prod/networking || echo "Directory not found"
 
       - name: Terraform init
-        working-directory: envs/prod/networking
+        working-directory: envs/prod
         run: terraform init -input=false -upgrade
 
       - name: Terraform state debug
-        working-directory: envs/prod/networking
+        working-directory: envs/prod
         run: |
           terraform workspace show
           terraform state list || echo "No resources currently in state"
 
       - name: Terraform apply
         if: env.TERRAFORM_ACTION == 'apply'
-        working-directory: envs/prod/networking
+        working-directory: envs/prod
         run: terraform apply -auto-approve -input=false
 
       - name: Terraform destroy
         if: env.TERRAFORM_ACTION == 'destroy'
-        working-directory: envs/prod/networking
+        working-directory: envs/prod
         run: terraform destroy -auto-approve -input=false
 
       - name: Sync repository to S3 (site bucket)
