@@ -20,9 +20,15 @@ permissions:
 jobs:
   upload:
     runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        backend_dir:
+          - envs/prod/networking
+          - envs/prod/storage
     env:
       S3_BUCKET: ${{ vars.AWS_S3_BUCKET }}
       TERRAFORM_ACTION: ${{ github.event_name == 'workflow_dispatch' && github.event.inputs.terraform_action || 'apply' }}
+      TERRAFORM_WORKING_DIR: ${{ matrix.backend_dir }}
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
@@ -41,31 +47,31 @@ jobs:
           echo "Current working directory: $(pwd)"
           echo "Listing repo root:"
           ls -al
-          echo "Listing envs/prod/networking:"
-          ls -al envs/prod/networking || echo "Directory not found"
+          echo "Listing target Terraform directory: ${{ env.TERRAFORM_WORKING_DIR }}"
+          ls -al "${{ env.TERRAFORM_WORKING_DIR }}" || echo "Directory not found"
 
       - name: Terraform init
-        working-directory: envs/prod/networking
+        working-directory: ${{ env.TERRAFORM_WORKING_DIR }}
         run: terraform init -input=false -upgrade
 
       - name: Terraform state debug
-        working-directory: envs/prod/networking
+        working-directory: ${{ env.TERRAFORM_WORKING_DIR }}
         run: |
           terraform workspace show
           terraform state list || echo "No resources currently in state"
 
       - name: Terraform apply
         if: env.TERRAFORM_ACTION == 'apply'
-        working-directory: envs/prod/networking
+        working-directory: ${{ env.TERRAFORM_WORKING_DIR }}
         run: terraform apply -auto-approve -input=false
 
       - name: Terraform destroy
         if: env.TERRAFORM_ACTION == 'destroy'
-        working-directory: envs/prod/networking
+        working-directory: ${{ env.TERRAFORM_WORKING_DIR }}
         run: terraform destroy -auto-approve -input=false
 
       - name: Sync repository to S3 (site bucket)
-        if: env.TERRAFORM_ACTION == 'apply'
+        if: env.TERRAFORM_ACTION == 'apply' && matrix.backend_dir == 'envs/prod/networking'
         run: |
           aws s3 sync . "s3://${S3_BUCKET}" \
             --exclude ".git/*" \
