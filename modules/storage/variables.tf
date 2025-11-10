@@ -18,3 +18,8 @@ variable "info_bucket_name" {
   description = "Name of the additional S3 bucket to create."
   type        = string
 }
+
+variable "oauth_table_name" {
+  description = "Name of the OAuth transactions DynamoDB table."
+  type        = string
+}
