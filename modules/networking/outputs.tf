@@ -15,7 +15,7 @@ output "public_route_table_id" {
 
 output "private_route_table_id" {
   description = "Identifier of the private main route table."
-  value       = aws_default_route_table.this.id
+  value       = aws_route_table.private.id
 }
 
 output "s3_gateway_endpoint_id" {
