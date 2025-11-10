@@ -3,6 +3,12 @@ variable "repository_name" {
   type        = string
 }
 
+variable "users_repository_name" {
+  description = "Name of the users ECR repository."
+  type        = string
+  default     = "walkai/users2"
+}
+
 variable "image_tag_mutability" {
   description = "Whether image tags can be overwritten."
   type        = string

@@ -3,3 +3,9 @@ resource "aws_ecr_repository" "api" {
   image_tag_mutability = var.image_tag_mutability
   tags                 = var.tags
 }
+
+resource "aws_ecr_repository" "users" {
+  name                 = var.users_repository_name
+  image_tag_mutability = var.image_tag_mutability
+  tags                 = var.tags
+}
