@@ -26,3 +26,14 @@ resource "aws_s3_bucket" "app_client" {
     }
   )
 }
+
+resource "aws_s3_bucket" "info_site" {
+  bucket = var.info_bucket_name
+
+  tags = merge(
+    var.tags,
+    {
+      Name = var.info_bucket_name
+    }
+  )
+}

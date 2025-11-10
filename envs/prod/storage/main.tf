@@ -5,8 +5,10 @@ provider "aws" {
 module "storage" {
   source = "../../../modules/storage"
 
-  table_name  = "walkai_cluster_cache"
-  bucket_name = "walkaiorg.app-client2"
+  table_name        = "walkai_cluster_cache"
+  bucket_name       = "walkaiorg.app-client2"
+  info_bucket_name  = "walkai-info2"
+
   tags = {
     Environment = "prod"
     Project     = "walkai"
