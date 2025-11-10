@@ -15,3 +15,14 @@ resource "aws_dynamodb_table" "cluster_cache" {
     }
   )
 }
+
+resource "aws_s3_bucket" "app_client" {
+  bucket = var.bucket_name
+
+  tags = merge(
+    var.tags,
+    {
+      Name = var.bucket_name
+    }
+  )
+}
