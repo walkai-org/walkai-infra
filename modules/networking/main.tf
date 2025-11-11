@@ -14,6 +14,7 @@ resource "aws_vpc" "this" {
 locals {
   public_subnet_keys  = [for key, subnet in var.subnets : key if subnet.public]
   private_subnet_keys = [for key, subnet in var.subnets : key if !subnet.public]
+  first_public_subnet_key = try(local.public_subnet_keys[0], null)
 }
 
 resource "aws_internet_gateway" "this" {
@@ -50,6 +51,29 @@ resource "aws_route_table" "public" {
     var.tags,
     {
       Name = "public-rtb"
+    }
+  )
+}
+
+resource "aws_eip" "nat" {
+  domain = "vpc"
+
+  tags = merge(
+    var.tags,
+    {
+      Name = "walkai-nat-eip"
+    }
+  )
+}
+
+resource "aws_nat_gateway" "public" {
+  allocation_id = aws_eip.nat.id
+  subnet_id     = aws_subnet.subnets[local.first_public_subnet_key].id
+
+  tags = merge(
+    var.tags,
+    {
+      Name = "walkai-nat-gateway2"
     }
   )
 }
@@ -94,6 +118,12 @@ resource "aws_route_table_association" "private" {
   for_each       = toset(local.private_subnet_keys)
   subnet_id      = aws_subnet.subnets[each.key].id
   route_table_id = aws_route_table.private.id
+}
+
+resource "aws_route" "private_nat_gateway" {
+  route_table_id         = aws_route_table.private.id
+  destination_cidr_block = "0.0.0.0/0"
+  nat_gateway_id         = aws_nat_gateway.public.id
 }
 
 resource "aws_subnet" "subnets" {
