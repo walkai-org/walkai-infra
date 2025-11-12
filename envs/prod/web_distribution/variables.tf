@@ -7,7 +7,7 @@ variable "region" {
 variable "app_client_bucket_name" {
   description = "Name of the S3 bucket that backs the web distribution origin."
   type        = string
-  default     = "walkaiorg.app-client2"
+  default     = null
 }
 
 variable "tags" {
