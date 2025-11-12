@@ -26,6 +26,7 @@ jobs:
           - envs/prod/networking
           - envs/prod/storage
           - envs/prod/container_registry
+          - envs/prod/web_distribution
     env:
       S3_BUCKET: ${{ vars.AWS_S3_BUCKET }}
       TERRAFORM_ACTION: ${{ github.event_name == 'workflow_dispatch' && github.event.inputs.terraform_action || 'apply' }}
