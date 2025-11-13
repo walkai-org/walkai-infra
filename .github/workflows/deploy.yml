@@ -18,7 +18,7 @@ permissions:
   id-token: write
   contents: read
 jobs:
-  upload:
+  terraform_infra:
     runs-on: ubuntu-latest
     strategy:
       matrix:
@@ -26,7 +26,6 @@ jobs:
           - envs/prod/networking
           - envs/prod/storage
           - envs/prod/container_registry
-          - envs/prod/web_distribution
     env:
       S3_BUCKET: ${{ vars.AWS_S3_BUCKET }}
       TERRAFORM_ACTION: ${{ github.event_name == 'workflow_dispatch' && github.event.inputs.terraform_action || 'apply' }}
@@ -81,3 +80,36 @@ jobs:
             --exclude "*.tfstate" \
             --exclude "*.tfstate.*" \
             --delete
+
+  web_distribution:
+    needs: terraform_infra
+    runs-on: ubuntu-latest
+    env:
+      TERRAFORM_WORKING_DIR: envs/prod/web_distribution
+      TERRAFORM_ACTION: ${{ github.event_name == 'workflow_dispatch' && github.event.inputs.terraform_action || 'apply' }}
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ secrets.AWS_DEPLOY_ROLE_ARN }}
+          aws-region: ${{ vars.AWS_REGION }}
+
+      - name: Set up Terraform
+        uses: hashicorp/setup-terraform@v3
+
+      - name: Terraform init
+        working-directory: ${{ env.TERRAFORM_WORKING_DIR }}
+        run: terraform init -input=false -upgrade
+
+      - name: Terraform apply
+        if: env.TERRAFORM_ACTION == 'apply'
+        working-directory: ${{ env.TERRAFORM_WORKING_DIR }}
+        run: terraform apply -auto-approve -input=false
+
+      - name: Terraform destroy
+        if: env.TERRAFORM_ACTION == 'destroy'
+        working-directory: ${{ env.TERRAFORM_WORKING_DIR }}
+        run: terraform destroy -auto-approve -input=false
