@@ -126,16 +126,14 @@ resource "aws_db_instance" "walkai" {
   )
 }
 
-resource "aws_security_group_rule" "db_ingress_from_allowed_sgs" {
-  for_each = toset(var.db_allowed_security_group_ids)
+# resource "aws_security_group_rule" "db_ingress_from_allowed_sgs" {
 
-  type                     = "ingress"
-  security_group_id        = aws_security_group.walkai_db.id
-  from_port                = 5432
-  to_port                  = 5432
-  protocol                 = "tcp"
-  source_security_group_id = each.value
-}
+#   type                     = "ingress"
+#   security_group_id        = aws_security_group.walkai_db.id
+#   from_port                = 5432
+#   to_port                  = 5432
+#   protocol                 = "tcp"
+# }
 
 resource "aws_security_group_rule" "sg_db_egress_all" {
   type              = "egress"
