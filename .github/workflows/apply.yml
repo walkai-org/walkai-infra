@@ -1,22 +1,14 @@
-name: Deploy to AWS
+name: Apply Infra
 
 on:
   push:
     branches: ["main"]
   workflow_dispatch:
-    inputs:
-      terraform_action:
-        description: "Terraform action to run"
-        required: true
-        default: "apply"
-        type: choice
-        options:
-          - apply
-          - destroy
 
 permissions:
   id-token: write
   contents: read
+
 jobs:
   terraform_infra:
     runs-on: ubuntu-latest
@@ -28,7 +20,6 @@ jobs:
           - envs/prod/container_registry
     env:
       S3_BUCKET: ${{ vars.AWS_S3_BUCKET }}
-      TERRAFORM_ACTION: ${{ github.event_name == 'workflow_dispatch' && github.event.inputs.terraform_action || 'apply' }}
       TERRAFORM_WORKING_DIR: ${{ matrix.backend_dir }}
     steps:
       - name: Checkout repository
@@ -62,17 +53,11 @@ jobs:
           terraform state list || echo "No resources currently in state"
 
       - name: Terraform apply
-        if: env.TERRAFORM_ACTION == 'apply'
         working-directory: ${{ env.TERRAFORM_WORKING_DIR }}
         run: terraform apply -auto-approve -input=false
 
-      - name: Terraform destroy
-        if: env.TERRAFORM_ACTION == 'destroy'
-        working-directory: ${{ env.TERRAFORM_WORKING_DIR }}
-        run: terraform destroy -auto-approve -input=false
-
       - name: Sync repository to S3 (site bucket)
-        if: env.TERRAFORM_ACTION == 'apply' && matrix.backend_dir == 'envs/prod/networking'
+        if: matrix.backend_dir == 'envs/prod/networking'
         run: |
           aws s3 sync . "s3://${S3_BUCKET}" \
             --exclude ".git/*" \
@@ -86,7 +71,6 @@ jobs:
     runs-on: ubuntu-latest
     env:
       TERRAFORM_WORKING_DIR: envs/prod/web_distribution
-      TERRAFORM_ACTION: ${{ github.event_name == 'workflow_dispatch' && github.event.inputs.terraform_action || 'apply' }}
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
@@ -105,11 +89,5 @@ jobs:
         run: terraform init -input=false -upgrade
 
       - name: Terraform apply
-        if: env.TERRAFORM_ACTION == 'apply'
         working-directory: ${{ env.TERRAFORM_WORKING_DIR }}
         run: terraform apply -auto-approve -input=false
-
-      - name: Terraform destroy
-        if: env.TERRAFORM_ACTION == 'destroy'
-        working-directory: ${{ env.TERRAFORM_WORKING_DIR }}
-        run: terraform destroy -auto-approve -input=false

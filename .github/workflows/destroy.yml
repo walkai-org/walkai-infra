@@ -1,0 +1,66 @@
+name: Destroy Infra
+
+on:
+  workflow_dispatch:
+
+permissions:
+  id-token: write
+  contents: read
+
+jobs:
+  front_half_destroy:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        backend_dir:
+          - envs/prod/web_distribution
+          - envs/prod/networking
+          - envs/prod/container_registry
+    env:
+      TERRAFORM_WORKING_DIR: ${{ matrix.backend_dir }}
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ secrets.AWS_DEPLOY_ROLE_ARN }}
+          aws-region: ${{ vars.AWS_REGION }}
+
+      - name: Set up Terraform
+        uses: hashicorp/setup-terraform@v3
+
+      - name: Terraform init
+        working-directory: ${{ env.TERRAFORM_WORKING_DIR }}
+        run: terraform init -input=false -upgrade
+
+      - name: Terraform destroy
+        working-directory: ${{ env.TERRAFORM_WORKING_DIR }}
+        run: terraform destroy -auto-approve -input=false
+
+  storage_destroy:
+    needs: front_half_destroy
+    runs-on: ubuntu-latest
+    env:
+      TERRAFORM_WORKING_DIR: envs/prod/storage
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ secrets.AWS_DEPLOY_ROLE_ARN }}
+          aws-region: ${{ vars.AWS_REGION }}
+
+      - name: Set up Terraform
+        uses: hashicorp/setup-terraform@v3
+
+      - name: Terraform init
+        working-directory: ${{ env.TERRAFORM_WORKING_DIR }}
+        run: terraform init -input=false -upgrade
+
+      - name: Terraform destroy
+        working-directory: ${{ env.TERRAFORM_WORKING_DIR }}
+        run: terraform destroy -auto-approve -input=false
