@@ -2,6 +2,24 @@ provider "aws" {
   region = var.region
 }
 
+data "terraform_remote_state" "networking" {
+  backend = "s3"
+
+  config = {
+    bucket  = "walkai-terraform-state"
+    key     = "prod/networking/terraform.tfstate"
+    region  = "us-east-1"
+    encrypt = true
+  }
+}
+
+locals {
+  private_subnet_ids = [
+    for name, id in data.terraform_remote_state.networking.outputs.subnet_ids :
+    id if startswith(name, "private")
+  ]
+}
+
 module "storage" {
   source = "../../../modules/storage"
 
@@ -9,6 +27,10 @@ module "storage" {
   oauth_table_name  = "walkai_oauth_tx"
   bucket_name       = "walkaiorg.app-client2"
   info_bucket_name  = "walkai-info2"
+  vpc_id            = data.terraform_remote_state.networking.outputs.vpc_id
+  private_subnet_ids = local.private_subnet_ids
+  vpc_cidr_block     = var.vpc_cidr_block
+  db_allowed_security_group_ids = var.db_allowed_security_group_ids
 
   tags = {
     Environment = "prod"
