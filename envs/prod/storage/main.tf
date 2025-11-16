@@ -31,7 +31,7 @@ module "storage" {
   oauth_table_name  = "walkai_oauth_tx"
   bucket_name       = "walkaiorg.app-client2"
   info_bucket_name  = "walkai-info2"
-  vpc_id            = data.terraform_remote_state.networking.outputs.vpc_id
+  vpc_id            = var.vpc_cidr_block
   private_subnet_ids = local.private_subnet_ids
   vpc_cidr_block     = var.vpc_cidr_block
   db_allowed_security_group_ids = local.db_allowed_security_group_ids
