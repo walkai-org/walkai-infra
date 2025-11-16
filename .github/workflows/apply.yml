@@ -10,17 +10,11 @@ permissions:
   contents: read
 
 jobs:
-  terraform_infra:
+  networking:
     runs-on: ubuntu-latest
-    strategy:
-      matrix:
-        backend_dir:
-          - envs/prod/networking
-          - envs/prod/storage
-          - envs/prod/container_registry
     env:
       S3_BUCKET: ${{ vars.AWS_S3_BUCKET }}
-      TERRAFORM_WORKING_DIR: ${{ matrix.backend_dir }}
+      TERRAFORM_WORKING_DIR: envs/prod/networking
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
@@ -57,7 +51,6 @@ jobs:
         run: terraform apply -auto-approve -input=false
 
       - name: Sync repository to S3 (site bucket)
-        if: matrix.backend_dir == 'envs/prod/networking'
         run: |
           aws s3 sync . "s3://${S3_BUCKET}" \
             --exclude ".git/*" \
@@ -66,8 +59,60 @@ jobs:
             --exclude "*.tfstate.*" \
             --delete
 
+  storage:
+    needs: networking
+    runs-on: ubuntu-latest
+    env:
+      TERRAFORM_WORKING_DIR: envs/prod/storage
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ secrets.AWS_DEPLOY_ROLE_ARN }}
+          aws-region: ${{ vars.AWS_REGION }}
+
+      - name: Set up Terraform
+        uses: hashicorp/setup-terraform@v3
+
+      - name: Terraform init
+        working-directory: ${{ env.TERRAFORM_WORKING_DIR }}
+        run: terraform init -input=false -upgrade
+
+      - name: Terraform apply
+        working-directory: ${{ env.TERRAFORM_WORKING_DIR }}
+        run: terraform apply -auto-approve -input=false
+
+  container_registry:
+    needs: storage
+    runs-on: ubuntu-latest
+    env:
+      TERRAFORM_WORKING_DIR: envs/prod/container_registry
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ secrets.AWS_DEPLOY_ROLE_ARN }}
+          aws-region: ${{ vars.AWS_REGION }}
+
+      - name: Set up Terraform
+        uses: hashicorp/setup-terraform@v3
+
+      - name: Terraform init
+        working-directory: ${{ env.TERRAFORM_WORKING_DIR }}
+        run: terraform init -input=false -upgrade
+
+      - name: Terraform apply
+        working-directory: ${{ env.TERRAFORM_WORKING_DIR }}
+        run: terraform apply -auto-approve -input=false
+
   web_distribution:
-    needs: terraform_infra
+    needs: container_registry
     runs-on: ubuntu-latest
     env:
       TERRAFORM_WORKING_DIR: envs/prod/web_distribution
