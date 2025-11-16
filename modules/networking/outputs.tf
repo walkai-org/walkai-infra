@@ -32,3 +32,8 @@ output "subnet_ids" {
   description = "Identifiers for the created subnets keyed by logical name."
   value       = { for key, subnet in aws_subnet.subnets : key => subnet.id }
 }
+
+output "default_security_group_id" {
+  description = "Identifier of the default security group associated with the VPC."
+  value       = aws_vpc.this.default_security_group_id
+}
