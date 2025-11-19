@@ -68,3 +68,9 @@ variable "db_allowed_security_group_ids" {
   type        = list(string)
   default     = []
 }
+
+variable "create_database" {
+  description = "Whether to create the PostgreSQL database resources."
+  type        = bool
+  default     = false
+}

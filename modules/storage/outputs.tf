@@ -25,15 +25,15 @@ output "app_client_bucket_domain_name" {
 
 output "db_instance_identifier" {
   description = "Identifier of the PostgreSQL instance."
-  value       = aws_db_instance.walkai.id
+  value       = try(aws_db_instance.walkai[0].id, null)
 }
 
 output "db_instance_endpoint" {
   description = "Endpoint of the PostgreSQL instance."
-  value       = aws_db_instance.walkai.endpoint
+  value       = try(aws_db_instance.walkai[0].endpoint, null)
 }
 
 output "db_security_group_id" {
   description = "Security group protecting the PostgreSQL instance."
-  value       = aws_security_group.walkai_db.id
+  value       = try(aws_security_group.walkai_db[0].id, null)
 }

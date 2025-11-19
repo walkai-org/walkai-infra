@@ -56,7 +56,15 @@ resource "aws_s3_bucket" "info_site" {
   )
 }
 
+locals {
+  db_allowed_security_group_ids = [
+    for sg in var.db_allowed_security_group_ids : trimspace(sg)
+    if try(length(trimspace(sg)), 0) > 0
+  ]
+}
+
 resource "aws_db_subnet_group" "walkai" {
+  count       = var.create_database ? 1 : 0
   name_prefix = "${var.db_identifier}-subnets-"
   subnet_ids  = var.private_subnet_ids
 
@@ -73,6 +81,7 @@ resource "aws_db_subnet_group" "walkai" {
 }
 
 resource "aws_security_group" "walkai_db" {
+  count       = var.create_database ? 1 : 0
   name        = "${var.db_identifier}-sg"
   description = "Security group for ${var.db_identifier}"
   vpc_id      = var.vpc_id
@@ -101,20 +110,22 @@ resource "aws_security_group" "walkai_db" {
 }
 
 resource "random_password" "db_master" {
+  count   = var.create_database ? 1 : 0
   length  = 20
   special = true
 }
 
 resource "aws_db_instance" "walkai" {
+  count                  = var.create_database ? 1 : 0
   identifier              = var.db_identifier
   engine                  = "postgres"
   instance_class          = var.db_instance_class
   allocated_storage       = 20
   db_name                 = var.db_name
   username                = var.db_username
-  password                = random_password.db_master.result
-  db_subnet_group_name    = aws_db_subnet_group.walkai.name
-  vpc_security_group_ids  = [aws_security_group.walkai_db.id]
+  password                = try(random_password.db_master[0].result, null)
+  db_subnet_group_name    = try(aws_db_subnet_group.walkai[0].name, null)
+  vpc_security_group_ids  = try([aws_security_group.walkai_db[0].id], [])
   multi_az                = false
   publicly_accessible     = false
   skip_final_snapshot     = true
@@ -130,20 +141,13 @@ resource "aws_db_instance" "walkai" {
   )
 }
 
-# resource "aws_security_group_rule" "db_ingress_from_allowed_sgs" {
+resource "aws_security_group_rule" "db_ingress_from_allowed_sgs" {
+  for_each = var.create_database ? toset(local.db_allowed_security_group_ids) : []
 
-#   type                     = "ingress"
-#   security_group_id        = aws_security_group.walkai_db.id
-#   from_port                = 5432
-#   to_port                  = 5432
-#   protocol                 = "tcp"
-# }
-
-resource "aws_security_group_rule" "sg_db_egress_all" {
-  type              = "egress"
-  security_group_id = aws_security_group.walkai_db.id
-  from_port         = 0
-  to_port           = 0
-  protocol          = "-1"
-  cidr_blocks       = ["0.0.0.0/0"]
+  type              = "ingress"
+  security_group_id = aws_security_group.walkai_db[0].id
+  from_port         = 5432
+  to_port           = 5432
+  protocol          = "tcp"
+  source_security_group_id = each.value
 }
