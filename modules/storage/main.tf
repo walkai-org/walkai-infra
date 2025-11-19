@@ -57,8 +57,8 @@ resource "aws_s3_bucket" "info_site" {
 }
 
 resource "aws_db_subnet_group" "walkai" {
-  name       = "${var.db_identifier}-subnets"
-  subnet_ids = var.private_subnet_ids
+  name_prefix = "${var.db_identifier}-subnets-"
+  subnet_ids  = var.private_subnet_ids
 
   tags = merge(
     var.tags,
@@ -66,6 +66,10 @@ resource "aws_db_subnet_group" "walkai" {
       Name = "${var.db_identifier}-subnet-group"
     }
   )
+
+  lifecycle {
+    create_before_destroy = true
+  }
 }
 
 resource "aws_security_group" "walkai_db" {
