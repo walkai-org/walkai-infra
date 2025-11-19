@@ -14,7 +14,6 @@ jobs:
       matrix:
         backend_dir:
           - envs/prod/web_distribution
-          - envs/prod/networking
           - envs/prod/container_registry
     env:
       TERRAFORM_WORKING_DIR: ${{ matrix.backend_dir }}
@@ -44,6 +43,32 @@ jobs:
     runs-on: ubuntu-latest
     env:
       TERRAFORM_WORKING_DIR: envs/prod/storage
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ secrets.AWS_DEPLOY_ROLE_ARN }}
+          aws-region: ${{ vars.AWS_REGION }}
+
+      - name: Set up Terraform
+        uses: hashicorp/setup-terraform@v3
+
+      - name: Terraform init
+        working-directory: ${{ env.TERRAFORM_WORKING_DIR }}
+        run: terraform init -input=false -upgrade
+
+      - name: Terraform destroy
+        working-directory: ${{ env.TERRAFORM_WORKING_DIR }}
+        run: terraform destroy -auto-approve -input=false
+
+  networking_destroy:
+    needs: storage_destroy
+    runs-on: ubuntu-latest
+    env:
+      TERRAFORM_WORKING_DIR: envs/prod/networking
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
