@@ -85,8 +85,34 @@ jobs:
         working-directory: ${{ env.TERRAFORM_WORKING_DIR }}
         run: terraform apply -auto-approve -input=false
 
+  load_balancer:
+    needs: networking
+    runs-on: ubuntu-latest
+    env:
+      TERRAFORM_WORKING_DIR: envs/prod/load_balancer
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ secrets.AWS_DEPLOY_ROLE_ARN }}
+          aws-region: ${{ vars.AWS_REGION }}
+
+      - name: Set up Terraform
+        uses: hashicorp/setup-terraform@v3
+
+      - name: Terraform init
+        working-directory: ${{ env.TERRAFORM_WORKING_DIR }}
+        run: terraform init -input=false -upgrade
+
+      - name: Terraform apply
+        working-directory: ${{ env.TERRAFORM_WORKING_DIR }}
+        run: terraform apply -auto-approve -input=false
+
   container_registry:
-    needs: storage
+    needs: load_balancer
     runs-on: ubuntu-latest
     env:
       TERRAFORM_WORKING_DIR: envs/prod/container_registry
