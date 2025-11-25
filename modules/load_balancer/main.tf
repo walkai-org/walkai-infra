@@ -19,7 +19,7 @@ resource "aws_lb" "walkai_api_alb" {
 }
 
 resource "aws_lb_target_group" "api_ecs_tg" {
-  name        = "api-ecs-tg"
+  name = "api-ecs-terraform"
   vpc_id      = var.vpc_id
   protocol    = "HTTP"
   port        = 80
