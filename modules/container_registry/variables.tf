@@ -20,3 +20,13 @@ variable "tags" {
   type        = map(string)
   default     = {}
 }
+
+variable "vpc_id" {
+  description = "VPC identifier that owns the ALB security group."
+  type        = string
+}
+
+variable "alb_security_group_id" {
+  description = "Security group allowed to reach the ECS tasks."
+  type        = string
+}
