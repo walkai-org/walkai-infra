@@ -150,6 +150,7 @@ resource "aws_subnet" "subnets" {
 
 resource "aws_network_acl" "this" {
   vpc_id = aws_vpc.this.id
+  subnet_ids = [for subnet in aws_subnet.subnets : subnet.id]
 
   ingress {
     rule_no    = 100
@@ -175,10 +176,4 @@ resource "aws_network_acl" "this" {
       Name = "${var.name}-acl"
     }
   )
-}
-
-resource "aws_network_acl_association" "subnets" {
-  for_each      = aws_subnet.subnets
-  network_acl_id = aws_network_acl.this.id
-  subnet_id      = each.value.id
 }
