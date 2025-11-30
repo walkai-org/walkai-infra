@@ -137,9 +137,5 @@ resource "aws_ecs_service" "walkai_api" {
     container_port   = 8000
   }
 
-  depends_on = [
-    aws_lb_target_group.api_ecs_tg
-  ]
-
   tags = var.tags
 }
