@@ -23,6 +23,16 @@ output "app_client_bucket_domain_name" {
   value       = aws_s3_bucket.app_client.bucket_regional_domain_name
 }
 
+output "info_bucket_name" {
+  description = "Name of the info S3 bucket."
+  value       = aws_s3_bucket.info_site.id
+}
+
+output "info_bucket_arn" {
+  description = "ARN of the info S3 bucket."
+  value       = aws_s3_bucket.info_site.arn
+}
+
 output "db_instance_identifier" {
   description = "Identifier of the PostgreSQL instance."
   value       = try(aws_db_instance.walkai[0].id, null)

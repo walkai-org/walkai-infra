@@ -74,12 +74,32 @@ resource "aws_iam_role" "task_execution_role" {
   tags = var.tags
 }
 
+resource "aws_iam_role_policy" "task_execution_role_env_policy" {
+  name = "get_web_api_env2"
+  role = aws_iam_role.task_execution_role.id
+
+  policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [
+      {
+        Sid    = "AllowReadEnvFileFromS3"
+        Effect = "Allow"
+        Action = [
+          "s3:GetObject",
+          "s3:GetObjectVersion"
+        ]
+        Resource = "${var.info_bucket_arn}/api/.env"
+      }
+    ]
+  })
+}
+
 resource "aws_iam_role_policy_attachment" "task_execution_role_policy" {
   role       = aws_iam_role.task_execution_role.name
   policy_arn = "arn:aws:iam::aws:policy/service-role/AmazonECSTaskExecutionRolePolicy"
 }
 
-resource "aws_cloudwatch_log_group" "walkai_api" {
+resource "aws_cloudwatch_log_group" "walkai_api_cloudwatch" {
   name              = "/ecs/walkai-api2"
   retention_in_days = 30
   tags              = var.tags
@@ -87,8 +107,8 @@ resource "aws_cloudwatch_log_group" "walkai_api" {
 
 data "aws_region" "current" {}
 
-resource "aws_ecs_task_definition" "walkai_api" {
-  family                   = "walkai-api2"
+resource "aws_ecs_task_definition" "walkai_api_task" {
+  family                   = "walkai-api-task2"
   network_mode             = "awsvpc"
   requires_compatibilities = ["FARGATE"]
   cpu                      = "512"
@@ -110,7 +130,7 @@ resource "aws_ecs_task_definition" "walkai_api" {
       logConfiguration = {
         logDriver = "awslogs"
         options = {
-          awslogs-group         = aws_cloudwatch_log_group.walkai_api.name
+          awslogs-group         = aws_cloudwatch_log_group.walkai_api_cloudwatch.name
           awslogs-region        = data.aws_region.current.name
           awslogs-stream-prefix = "ecs"
         }
@@ -121,10 +141,10 @@ resource "aws_ecs_task_definition" "walkai_api" {
   tags = var.tags
 }
 
-resource "aws_ecs_service" "walkai_api" {
-  name            = "walkai-api2"
+resource "aws_ecs_service" "walkai_api_service" {
+  name            = "walkai-api-service2"
   cluster         = aws_ecs_cluster.walkai.id
-  task_definition = aws_ecs_task_definition.walkai_api.arn
+  task_definition = aws_ecs_task_definition.walkai_api_task.arn
   desired_count   = 1
   launch_type     = "FARGATE"
   scheduling_strategy = "REPLICA"

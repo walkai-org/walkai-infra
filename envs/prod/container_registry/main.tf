@@ -24,6 +24,17 @@ data "terraform_remote_state" "load_balancer" {
   }
 }
 
+data "terraform_remote_state" "storage" {
+  backend = "s3"
+
+  config = {
+    bucket  = "walkai-terraform-state"
+    key     = "prod/storage/terraform.tfstate"
+    region  = "us-east-1"
+    encrypt = true
+  }
+}
+
 module "container_registry" {
   source = "../../../modules/container_registry"
 
@@ -38,9 +49,11 @@ module "container_registry" {
     data.terraform_remote_state.networking.outputs.subnet_ids["private_a"],
     data.terraform_remote_state.networking.outputs.subnet_ids["private_b"]
   ]
+  info_bucket_arn       = data.terraform_remote_state.storage.outputs.info_bucket_arn
 
   depends_on = [
     data.terraform_remote_state.networking,
-    data.terraform_remote_state.load_balancer
+    data.terraform_remote_state.load_balancer,
+    data.terraform_remote_state.storage
   ]
 }

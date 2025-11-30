@@ -40,3 +40,8 @@ variable "private_subnet_ids" {
   description = "Private subnets for ECS tasks."
   type        = list(string)
 }
+
+variable "info_bucket_arn" {
+  description = "ARN of the info bucket containing environment files."
+  type        = string
+}
