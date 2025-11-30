@@ -147,3 +147,38 @@ resource "aws_subnet" "subnets" {
     }
   )
 }
+
+resource "aws_network_acl" "this" {
+  vpc_id = aws_vpc.this.id
+
+  ingress {
+    rule_no    = 100
+    protocol   = "-1"
+    action     = "allow"
+    cidr_block = "0.0.0.0/0"
+    from_port  = 0
+    to_port    = 0
+  }
+
+  egress {
+    rule_no    = 100
+    protocol   = "-1"
+    action     = "allow"
+    cidr_block = "0.0.0.0/0"
+    from_port  = 0
+    to_port    = 0
+  }
+
+  tags = merge(
+    var.tags,
+    {
+      Name = "${var.name}-acl"
+    }
+  )
+}
+
+resource "aws_network_acl_association" "subnets" {
+  for_each      = aws_subnet.subnets
+  network_acl_id = aws_network_acl.this.id
+  subnet_id      = each.value.id
+}
