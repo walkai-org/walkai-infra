@@ -30,3 +30,13 @@ variable "alb_security_group_id" {
   description = "Security group allowed to reach the ECS tasks."
   type        = string
 }
+
+variable "alb_target_group_arn" {
+  description = "ARN of the ALB target group to attach ECS service."
+  type        = string
+}
+
+variable "private_subnet_ids" {
+  description = "Private subnets for ECS tasks."
+  type        = list(string)
+}

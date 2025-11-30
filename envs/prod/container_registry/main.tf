@@ -33,6 +33,12 @@ module "container_registry" {
   tags                  = var.tags
   vpc_id                = data.terraform_remote_state.networking.outputs.vpc_id
   alb_security_group_id = data.terraform_remote_state.load_balancer.outputs.alb_security_group_id
+  region                = var.region
+  alb_target_group_arn  = data.terraform_remote_state.load_balancer.outputs.alb_target_group_arn
+  private_subnet_ids    = [
+    data.terraform_remote_state.networking.outputs.subnet_ids["private_a"],
+    data.terraform_remote_state.networking.outputs.subnet_ids["private_b"]
+  ]
 
   depends_on = [
     data.terraform_remote_state.networking,
