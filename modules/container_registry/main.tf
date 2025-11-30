@@ -11,6 +11,10 @@ resource "aws_ecr_repository" "users" {
 }
 
 
+locals {
+  api_container_name = replace(var.repository_name, "/", "-")
+}
+
 resource "aws_security_group" "sg_ecs" {
   name        = "sg_ecs_terraform"
   description = "Allows ecs task communication"
@@ -93,7 +97,7 @@ resource "aws_ecs_task_definition" "walkai_api" {
 
   container_definitions = jsonencode([
     {
-      name      = aws_ecr_repository.api.name
+      name      = local.api_container_name
       image     = aws_ecr_repository.api.repository_url
       essential = true
       portMappings = [
@@ -133,7 +137,7 @@ resource "aws_ecs_service" "walkai_api" {
 
   load_balancer {
     target_group_arn = var.alb_target_group_arn
-    container_name   = aws_ecr_repository.api.name
+    container_name   = local.api_container_name
     container_port   = 8000
   }
 
