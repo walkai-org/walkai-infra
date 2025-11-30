@@ -45,3 +45,13 @@ variable "info_bucket_arn" {
   description = "ARN of the info bucket containing environment files."
   type        = string
 }
+
+variable "cluster_cache_table_arn" {
+  description = "ARN of the DynamoDB cluster cache table."
+  type        = string
+}
+
+variable "oauth_table_arn" {
+  description = "ARN of the OAuth DynamoDB table."
+  type        = string
+}

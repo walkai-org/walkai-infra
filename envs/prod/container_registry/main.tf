@@ -50,6 +50,8 @@ module "container_registry" {
     data.terraform_remote_state.networking.outputs.subnet_ids["private_b"]
   ]
   info_bucket_arn       = data.terraform_remote_state.storage.outputs.info_bucket_arn
+  cluster_cache_table_arn = data.terraform_remote_state.storage.outputs.cluster_cache_table_arn
+  oauth_table_arn         = data.terraform_remote_state.storage.outputs.oauth_table_arn
 
   depends_on = [
     data.terraform_remote_state.networking,

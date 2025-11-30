@@ -99,6 +99,164 @@ resource "aws_iam_role_policy_attachment" "task_execution_role_policy" {
   policy_arn = "arn:aws:iam::aws:policy/service-role/AmazonECSTaskExecutionRolePolicy"
 }
 
+resource "aws_iam_role" "walkai_api_task_role" {
+  name = "walkai_api_task_role2"
+
+  assume_role_policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [
+      {
+        Action = "sts:AssumeRole"
+        Effect = "Allow"
+        Principal = {
+          Service = "ecs-tasks.amazonaws.com"
+        }
+      }
+    ]
+  })
+
+  tags = var.tags
+}
+
+resource "aws_iam_policy" "ecr_access_policy" {
+  name        = "ecr_access2"
+  description = "Custom ECR access policy for the walkai API task role."
+
+  policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [
+      {
+        Sid    = "AuthToken"
+        Effect = "Allow"
+        Action = "ecr:GetAuthorizationToken"
+        Resource = "*"
+      },
+      {
+        Sid    = "PushOnlyToSpecificRepos"
+        Effect = "Allow"
+        Action = [
+          "ecr:BatchCheckLayerAvailability",
+          "ecr:InitiateLayerUpload",
+          "ecr:UploadLayerPart",
+          "ecr:CompleteLayerUpload",
+          "ecr:PutImage",
+          "ecr:DescribeImages",
+          "ecr:ListImages"
+        ]
+        Resource = [
+          aws_ecr_repository.users.arn
+        ]
+      },
+      {
+        Sid    = "ClusterPullPermissions"
+        Effect = "Allow"
+        Action = [
+          "ecr:BatchGetImage",
+          "ecr:GetDownloadUrlForLayer",
+          "ecr:BatchCheckLayerAvailability"
+        ]
+        Resource = aws_ecr_repository.users.arn
+      },
+      {
+        Sid    = "NoDeletes"
+        Effect = "Deny"
+        Action = [
+          "ecr:BatchDeleteImage",
+          "ecr:DeleteRepository",
+          "ecr:DeleteRepositoryPolicy"
+        ]
+        Resource = "*"
+      }
+    ]
+  })
+}
+
+resource "aws_iam_role_policy_attachment" "walkai_api_task_role_policy_attachment" {
+  role       = aws_iam_role.walkai_api_task_role.name
+  policy_arn = aws_iam_policy.ecr_access_policy.arn
+}
+
+resource "aws_iam_policy" "cluster_cache_rw_policy" {
+  name        = "put_and_delete_items_ddb_cluster_cache_table2"
+  description = "Allow read/write access to the cluster_cache DynamoDB table."
+
+  policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [
+      {
+        Sid    = "ClusterCacheRW"
+        Effect = "Allow"
+        Action = [
+          "dynamodb:GetItem",
+          "dynamodb:PutItem"
+        ]
+        Resource = var.cluster_cache_table_arn
+      }
+    ]
+  })
+}
+
+resource "aws_iam_role_policy_attachment" "cluster_cache_rw_policy_attachment" {
+  role       = aws_iam_role.walkai_api_task_role.name
+  policy_arn = aws_iam_policy.cluster_cache_rw_policy.arn
+}
+
+resource "aws_iam_policy" "oauth_rw_policy" {
+  name        = "put_and_delete_items_ddb_oauth_table2"
+  description = "Allow write/delete access to the oauth DynamoDB table."
+
+  policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [
+      {
+        Sid    = "OAuthTxRW"
+        Effect = "Allow"
+        Action = [
+          "dynamodb:PutItem",
+          "dynamodb:DeleteItem"
+        ]
+        Resource = var.oauth_table_arn
+      }
+    ]
+  })
+}
+
+resource "aws_iam_role_policy_attachment" "oauth_rw_policy_attachment" {
+  role       = aws_iam_role.walkai_api_task_role.name
+  policy_arn = aws_iam_policy.oauth_rw_policy.arn
+}
+
+resource "aws_iam_policy" "walkai_bucket_rw_policy" {
+  name        = "put_objects_walkai_bucket2"
+  description = "Allow ECS tasks to read/write objects in the info bucket."
+
+  policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [
+      {
+        Sid    = "AllowReadWriteObjectsInWalkai"
+        Effect = "Allow"
+        Action = [
+          "s3:GetObject",
+          "s3:PutObject"
+        ]
+        Resource = "${var.info_bucket_arn}/*"
+      },
+      {
+        Sid      = "AllowListWalkaiBucket"
+        Effect   = "Allow"
+        Action   = "s3:ListBucket"
+        Resource = replace(var.info_bucket_arn, "/*", "")
+      }
+    ]
+  })
+}
+
+resource "aws_iam_role_policy_attachment" "walkai_bucket_rw_policy_attachment" {
+  role       = aws_iam_role.walkai_api_task_role.name
+  policy_arn = aws_iam_policy.walkai_bucket_rw_policy.arn
+}
+
 resource "aws_cloudwatch_log_group" "walkai_api_cloudwatch" {
   name              = "/ecs/walkai-api2"
   retention_in_days = 30

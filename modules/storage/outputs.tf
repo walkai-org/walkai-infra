@@ -8,6 +8,26 @@ output "table_arn" {
   value       = aws_dynamodb_table.cluster_cache.arn
 }
 
+output "cluster_cache_table_name" {
+  description = "Name of the cluster cache table."
+  value       = aws_dynamodb_table.cluster_cache.name
+}
+
+output "cluster_cache_table_arn" {
+  description = "ARN of the cluster cache DynamoDB table."
+  value       = aws_dynamodb_table.cluster_cache.arn
+}
+
+output "oauth_table_name" {
+  description = "Name of the OAuth transactions table."
+  value       = aws_dynamodb_table.oauth_tx.name
+}
+
+output "oauth_table_arn" {
+  description = "ARN of the OAuth transactions table."
+  value       = aws_dynamodb_table.oauth_tx.arn
+}
+
 output "app_client_bucket_name" {
   description = "Name of the app client S3 bucket."
   value       = aws_s3_bucket.app_client.id
