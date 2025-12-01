@@ -22,7 +22,7 @@ resource "aws_lb_target_group" "api_ecs_tg" {
   name = "api-ecs-terraform"
   vpc_id      = var.vpc_id
   protocol    = "HTTP"
-  port        = 80
+  port        = 8000
   target_type = "ip"                        # TODO: change to "instance" if that’s what you use
 
   health_check {

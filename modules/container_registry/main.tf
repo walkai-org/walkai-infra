@@ -15,6 +15,10 @@ locals {
   api_container_name = replace(var.repository_name, "/", "-")
 }
 
+data "aws_lb_target_group" "api" {
+  arn = var.alb_target_group_arn
+}
+
 resource "aws_security_group" "sg_ecs" {
   name        = "sg_ecs_terraform"
   description = "Allows ecs task communication"
@@ -315,7 +319,7 @@ resource "aws_ecs_service" "walkai_api_service" {
   }
 
   load_balancer {
-    target_group_arn = var.alb_target_group_arn
+    target_group_arn = data.aws_lb_target_group.api.arn
     container_name   = local.api_container_name
     container_port   = 8000
   }
