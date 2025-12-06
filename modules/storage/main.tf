@@ -113,19 +113,51 @@ resource "random_password" "db_master" {
   count   = var.create_database ? 1 : 0
   length  = 20
   special = true
+  override_special = "!#$%&()*+,-.:;<=>?[]^_{|}~"
+}
+
+resource "aws_secretsmanager_secret" "db_master" {
+  count      = var.create_database ? 1 : 0
+  name       = "${var.db_identifier}-credentials"
+  description = "Master credentials for ${var.db_identifier}"
+
+  tags = merge(
+    var.tags,
+    {
+      Name = "${var.db_identifier}-credentials"
+    }
+  )
+}
+
+resource "aws_secretsmanager_secret_version" "db_master" {
+  count = var.create_database ? 1 : 0
+
+  secret_id     = aws_secretsmanager_secret.db_master[0].id
+  secret_string = jsonencode({
+    username = var.db_username
+    password = random_password.db_master[0].result
+    engine   = "postgres"
+    dbname   = var.db_name
+    host     = aws_db_instance.walkai[0].address
+    port     = 5432
+  })
+
+  depends_on = [
+    aws_db_instance.walkai
+  ]
 }
 
 resource "aws_db_instance" "walkai" {
   count                  = var.create_database ? 1 : 0
-  identifier              = var.db_identifier
-  engine                  = "postgres"
-  instance_class          = var.db_instance_class
-  allocated_storage       = 20
-  db_name                 = var.db_name
-  username                = var.db_username
-  password                = try(random_password.db_master[0].result, null)
-  db_subnet_group_name    = try(aws_db_subnet_group.walkai[0].name, null)
-  vpc_security_group_ids  = try([aws_security_group.walkai_db[0].id], [])
+  identifier             = var.db_identifier
+  engine                 = "postgres"
+  instance_class         = var.db_instance_class
+  allocated_storage      = 20
+  db_name                = var.db_name
+  username               = var.db_username
+  password               = random_password.db_master[0].result
+  db_subnet_group_name   = aws_db_subnet_group.walkai[0].name
+  vpc_security_group_ids = [aws_security_group.walkai_db[0].id]
   multi_az                = false
   publicly_accessible     = false
   skip_final_snapshot     = true
