@@ -34,6 +34,11 @@ variable "private_subnet_ids" {
   type        = list(string)
 }
 
+variable "private_subnet_azs" {
+  description = "List of availability zones corresponding to the private subnets."
+  type        = list(string)
+}
+
 variable "vpc_cidr_block" {
   description = "CIDR block of the VPC for use in security group rules."
   type        = string

@@ -117,8 +117,8 @@ resource "random_password" "db_master" {
 }
 
 resource "aws_secretsmanager_secret" "db_master" {
-  count      = var.create_database ? 1 : 0
-  name       = "${var.db_identifier}-credentials"
+  count       = var.create_database ? 1 : 0
+  name_prefix = "${var.db_identifier}-credentials-"
   description = "Master credentials for ${var.db_identifier}"
 
   tags = merge(
@@ -158,6 +158,7 @@ resource "aws_db_instance" "walkai" {
   password               = random_password.db_master[0].result
   db_subnet_group_name   = aws_db_subnet_group.walkai[0].name
   vpc_security_group_ids = [aws_security_group.walkai_db[0].id]
+  availability_zone      = var.private_subnet_azs[0]
   multi_az                = false
   publicly_accessible     = false
   skip_final_snapshot     = true
