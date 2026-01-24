@@ -112,7 +112,7 @@ jobs:
         run: terraform apply -auto-approve -input=false
 
   ecr:
-    needs: load_balancer
+    needs: networking
     runs-on: ubuntu-latest
     outputs:
       repository_name: ${{ steps.out.outputs.repository_name }}
@@ -188,7 +188,7 @@ jobs:
           docker push "${ECR_IMAGE_LATEST}"
 
   ecs:
-    needs: push_backend_image
+    needs: [storage, load_balancer, push_backend_image]
     runs-on: ubuntu-latest
     env:
       TERRAFORM_WORKING_DIR: envs/prod/ecs
