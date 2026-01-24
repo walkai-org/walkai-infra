@@ -8,6 +8,11 @@ output "subnet_ids" {
   value       = module.networking.subnet_ids
 }
 
+output "subnet_azs" {
+  description = "Availability zones for each subnet keyed by logical name."
+  value       = module.networking.subnet_azs
+}
+
 output "default_security_group_id" {
   description = "Default security group ID associated with the VPC."
   value       = module.networking.default_security_group_id
