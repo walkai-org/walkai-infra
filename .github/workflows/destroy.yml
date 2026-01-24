@@ -14,7 +14,8 @@ jobs:
       matrix:
         backend_dir:
           - envs/prod/web_distribution
-          - envs/prod/container_registry
+          - envs/prod/ecs
+          - envs/prod/ecr
     env:
       TERRAFORM_WORKING_DIR: ${{ matrix.backend_dir }}
     steps:

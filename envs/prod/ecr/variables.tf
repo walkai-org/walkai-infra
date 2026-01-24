@@ -1,5 +1,5 @@
 variable "region" {
-  description = "AWS region for the prod container registry stack."
+  description = "AWS region for the prod ECR stack."
   type        = string
   default     = "us-east-1"
 }
@@ -23,7 +23,7 @@ variable "image_tag_mutability" {
 }
 
 variable "tags" {
-  description = "Tags to apply to the container registry resources."
+  description = "Tags to apply to the ECR resources."
   type        = map(string)
   default = {
     Environment = "prod"

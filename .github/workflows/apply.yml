@@ -111,11 +111,87 @@ jobs:
         working-directory: ${{ env.TERRAFORM_WORKING_DIR }}
         run: terraform apply -auto-approve -input=false
 
-  container_registry:
+  ecr:
     needs: load_balancer
     runs-on: ubuntu-latest
+    outputs:
+      repository_name: ${{ steps.out.outputs.repository_name }}
+      repository_arn: ${{ steps.out.outputs.repository_arn }}
     env:
-      TERRAFORM_WORKING_DIR: envs/prod/container_registry
+      TERRAFORM_WORKING_DIR: envs/prod/ecr
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ secrets.AWS_DEPLOY_ROLE_ARN }}
+          aws-region: ${{ vars.AWS_REGION }}
+
+      - name: Set up Terraform
+        uses: hashicorp/setup-terraform@v3
+
+      - name: Terraform init
+        working-directory: ${{ env.TERRAFORM_WORKING_DIR }}
+        run: terraform init -input=false -upgrade
+
+      - name: Terraform apply
+        working-directory: ${{ env.TERRAFORM_WORKING_DIR }}
+        run: terraform apply -auto-approve -input=false
+
+      - name: Capture ECR outputs
+        id: out
+        working-directory: ${{ env.TERRAFORM_WORKING_DIR }}
+        run: |
+          echo "repository_name=$(terraform output -raw repository_name)" >> "$GITHUB_OUTPUT"
+          echo "repository_arn=$(terraform output -raw repository_arn)" >> "$GITHUB_OUTPUT"
+
+  push_backend_image:
+    needs: ecr
+    runs-on: ubuntu-latest
+    env:
+      ECR_REPOSITORY: ${{ needs.ecr.outputs.repository_name }}
+      SOURCE_IMAGE: ${{ vars.BACKEND_IMAGE_URL }}
+      IMAGE_TAG: ${{ github.sha }}
+    steps:
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ secrets.AWS_DEPLOY_ROLE_ARN }}
+          aws-region: ${{ vars.AWS_REGION }}
+
+      - name: Login to Amazon ECR
+        uses: aws-actions/amazon-ecr-login@v2
+
+      - name: Resolve ECR registry
+        id: ecr
+        run: echo "registry=$(aws sts get-caller-identity --query Account --output text).dkr.ecr.${{ vars.AWS_REGION }}.amazonaws.com" >> "$GITHUB_OUTPUT"
+
+      - name: Pull public backend image
+        run: docker pull "${SOURCE_IMAGE}"
+
+      - name: Tag and push to ECR
+        env:
+          ECR_REPOSITORY_ARN: ${{ needs.ecr.outputs.repository_arn }}
+        run: |
+          ECR_IMAGE="${{ steps.ecr.outputs.registry }}/${ECR_REPOSITORY}:${IMAGE_TAG}"
+          docker tag "${SOURCE_IMAGE}" "${ECR_IMAGE}"
+          docker push "${ECR_IMAGE}"
+
+      - name: Also tag latest
+        env:
+          ECR_REPOSITORY_ARN: ${{ needs.ecr.outputs.repository_arn }}
+        run: |
+          ECR_IMAGE_LATEST="${{ steps.ecr.outputs.registry }}/${ECR_REPOSITORY}:latest"
+          docker tag "${SOURCE_IMAGE}" "${ECR_IMAGE_LATEST}"
+          docker push "${ECR_IMAGE_LATEST}"
+
+  ecs:
+    needs: push_backend_image
+    runs-on: ubuntu-latest
+    env:
+      TERRAFORM_WORKING_DIR: envs/prod/ecs
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
@@ -138,7 +214,7 @@ jobs:
         run: terraform apply -auto-approve -input=false
 
   web_distribution:
-    needs: container_registry
+    needs: ecs
     runs-on: ubuntu-latest
     env:
       TERRAFORM_WORKING_DIR: envs/prod/web_distribution

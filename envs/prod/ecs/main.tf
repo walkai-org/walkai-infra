@@ -35,12 +35,23 @@ data "terraform_remote_state" "storage" {
   }
 }
 
-module "container_registry" {
-  source = "../../../modules/container_registry"
+data "terraform_remote_state" "ecr" {
+  backend = "s3"
 
-  repository_name       = var.repository_name
-  users_repository_name = var.users_repository_name
-  image_tag_mutability  = var.image_tag_mutability
+  config = {
+    bucket  = "walkai-terraform-state"
+    key     = "prod/ecr/terraform.tfstate"
+    region  = "us-east-1"
+    encrypt = true
+  }
+}
+
+module "ecs" {
+  source = "../../../modules/ecs"
+
+  repository_name       = data.terraform_remote_state.ecr.outputs.repository_name
+  repository_url        = data.terraform_remote_state.ecr.outputs.repository_url
+  users_repository_arn  = data.terraform_remote_state.ecr.outputs.users_repository_arn
   tags                  = var.tags
   vpc_id                = data.terraform_remote_state.networking.outputs.vpc_id
   alb_security_group_id = data.terraform_remote_state.load_balancer.outputs.alb_security_group_id
@@ -49,13 +60,14 @@ module "container_registry" {
     data.terraform_remote_state.networking.outputs.subnet_ids["private_a"],
     data.terraform_remote_state.networking.outputs.subnet_ids["private_b"]
   ]
-  info_bucket_arn       = data.terraform_remote_state.storage.outputs.info_bucket_arn
+  info_bucket_arn         = data.terraform_remote_state.storage.outputs.info_bucket_arn
   cluster_cache_table_arn = data.terraform_remote_state.storage.outputs.cluster_cache_table_arn
   oauth_table_arn         = data.terraform_remote_state.storage.outputs.oauth_table_arn
 
   depends_on = [
     data.terraform_remote_state.networking,
     data.terraform_remote_state.load_balancer,
-    data.terraform_remote_state.storage
+    data.terraform_remote_state.storage,
+    data.terraform_remote_state.ecr
   ]
 }
