@@ -63,6 +63,16 @@ output "db_instance_endpoint" {
   value       = try(aws_db_instance.walkai[0].endpoint, null)
 }
 
+output "private_subnet_ids" {
+  description = "Private subnet IDs used by storage resources."
+  value       = var.private_subnet_ids
+}
+
+output "private_subnet_azs" {
+  description = "Availability zones of the storage private subnets."
+  value       = var.private_subnet_azs
+}
+
 output "db_security_group_id" {
   description = "Security group protecting the PostgreSQL instance."
   value       = try(aws_security_group.walkai_db[0].id, null)
