@@ -8,16 +8,62 @@ permissions:
   contents: read
 
 jobs:
-  front_half_destroy:
+  web_distribution_destroy:
     runs-on: ubuntu-latest
-    strategy:
-      matrix:
-        backend_dir:
-          - envs/prod/web_distribution
-          - envs/prod/ecs
-          - envs/prod/ecr
     env:
-      TERRAFORM_WORKING_DIR: ${{ matrix.backend_dir }}
+      TERRAFORM_WORKING_DIR: envs/prod/web_distribution
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ secrets.AWS_DEPLOY_ROLE_ARN }}
+          aws-region: ${{ vars.AWS_REGION }}
+
+      - name: Set up Terraform
+        uses: hashicorp/setup-terraform@v3
+
+      - name: Terraform init
+        working-directory: ${{ env.TERRAFORM_WORKING_DIR }}
+        run: terraform init -input=false -upgrade
+
+      - name: Terraform destroy
+        working-directory: ${{ env.TERRAFORM_WORKING_DIR }}
+        run: terraform destroy -auto-approve -input=false
+
+  ecs_destroy:
+    needs: web_distribution_destroy
+    runs-on: ubuntu-latest
+    env:
+      TERRAFORM_WORKING_DIR: envs/prod/ecs
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ secrets.AWS_DEPLOY_ROLE_ARN }}
+          aws-region: ${{ vars.AWS_REGION }}
+
+      - name: Set up Terraform
+        uses: hashicorp/setup-terraform@v3
+
+      - name: Terraform init
+        working-directory: ${{ env.TERRAFORM_WORKING_DIR }}
+        run: terraform init -input=false -upgrade
+
+      - name: Terraform destroy
+        working-directory: ${{ env.TERRAFORM_WORKING_DIR }}
+        run: terraform destroy -auto-approve -input=false
+
+  ecr_destroy:
+    needs: ecs_destroy
+    runs-on: ubuntu-latest
+    env:
+      TERRAFORM_WORKING_DIR: envs/prod/ecr
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
@@ -40,7 +86,7 @@ jobs:
         run: terraform destroy -auto-approve -input=false
 
   load_balancer_destroy:
-    needs: front_half_destroy
+    needs: ecr_destroy
     runs-on: ubuntu-latest
     env:
       TERRAFORM_WORKING_DIR: envs/prod/load_balancer
