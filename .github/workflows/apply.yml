@@ -187,11 +187,87 @@ jobs:
           docker tag "${SOURCE_IMAGE}" "${ECR_IMAGE_LATEST}"
           docker push "${ECR_IMAGE_LATEST}"
 
+  env_file:
+    needs: storage
+    runs-on: ubuntu-latest
+    outputs:
+      info_bucket_name: ${{ steps.out.outputs.info_bucket_name }}
+    env:
+      TERRAFORM_WORKING_DIR: envs/prod/storage
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ secrets.AWS_DEPLOY_ROLE_ARN }}
+          aws-region: ${{ vars.AWS_REGION }}
+
+      - name: Set up Terraform
+        uses: hashicorp/setup-terraform@v3
+
+      - name: Terraform init
+        working-directory: ${{ env.TERRAFORM_WORKING_DIR }}
+        run: terraform init -input=false -upgrade
+
+      - name: Resolve info bucket name
+        id: out
+        working-directory: ${{ env.TERRAFORM_WORKING_DIR }}
+        run: |
+          arn=$(terraform output -raw info_bucket_arn)
+          bucket_name="${arn#arn:aws:s3:::}"
+          secret_arn=$(terraform output -raw db_master_secret_arn)
+          echo "info_bucket_name=${bucket_name}" >> "$GITHUB_OUTPUT"
+          echo "db_secret_arn=${secret_arn}" >> "$GITHUB_OUTPUT"
+
+      - name: Create .env from Secrets Manager
+        env:
+          AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          ACS_SMTP_PASSWORD: ${{ secrets.ACS_SMTP_PASSWORD }}
+          JWT_SECRET: ${{ secrets.JWT_SECRET }}
+          GITHUB_CLIENT_SECRET: ${{ secrets.CLIENT_SECRET }}
+
+          
+        run: |
+          secret_value=$(aws secretsmanager get-secret-value --secret-id "${{ steps.out.outputs.db_secret_arn }}" --query SecretString --output text)
+          printf "DATABASE_URL=%s\n" "${secret_value}" > .env
+          cat >> .env <<EOF
+          ACS_SMTP_HOST=smtp.azurecomm.net
+          ACS_SMTP_PORT=587
+          ACS_SMTP_USERNAME=walkai
+          ACS_SMTP_PASSWORD=${ACS_SMTP_PASSWORD}
+          MAIL_FROM=noreply@info.walkaiorg.app
+          INVITE_BASE_URL=https://walkaiorg.app/invitations/
+          JWT_SECRET=${JWT_SECRET}
+          JWT_ALGO=HS256
+          ACCESS_MIN=300
+          GITHUB_CLIENT_ID=Ov23liJh3cfjmR4dFTqY
+          GITHUB_CLIENT_SECRET=${GITHUB_CLIENT_SECRET}
+          GITHUB_REDIRECT_URI=https://api.walkaiorg.app/oauth/github/callback
+          FRONTEND_HOME=https://walkaiorg.app/app/
+          JOB_NAMESPACE=walkai
+          K8S_SECRET_ID=walkai/k8s/cluster-creds
+          API_BASE_URL=https://api.walkaiorg.app
+          AWS_ACCESS_KEY_ID=${AWS_ACCESS_KEY_ID}
+          AWS_SECRET_ACCESS_KEY=${AWS_SECRET_ACCESS_KEY}
+          AWS_REGION=us-east-1
+          AWS_S3_BUCKET=walkai-info2
+          ECR_URL=864683107176.dkr.ecr.us-east-1.amazonaws.com/walkai/users2
+          DYNAMODB_OAUTH_TABLE=oauth_tx2
+          DYNAMODB_CLUSTER_CACHE_TABLE=cluster_cache2
+          SCHEDULE_WORKER_ENABLED=true
+          EOF
+      - name: Upload .env to S3
+        run: aws s3 cp .env "s3://${{ steps.out.outputs.info_bucket_name }}/api/.env"
+
   ecs:
-    needs: [storage, load_balancer, push_backend_image]
+    needs: [storage, load_balancer, push_backend_image, env_file]
     runs-on: ubuntu-latest
     env:
       TERRAFORM_WORKING_DIR: envs/prod/ecs
+      INFO_BUCKET_NAME: ${{ needs.env_file.outputs.info_bucket_name }}
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4

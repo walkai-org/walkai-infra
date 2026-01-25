@@ -1,5 +1,6 @@
 locals {
   api_container_name = replace(var.repository_name, "/", "-")
+  env_file_arn       = "${var.info_bucket_arn}/api/.env"
 }
 
 data "aws_lb_target_group" "api" {
@@ -270,6 +271,12 @@ resource "aws_ecs_task_definition" "walkai_api_task" {
       name      = local.api_container_name
       image     = var.repository_url
       essential = true
+      environmentFiles = [
+        {
+          value = local.env_file_arn
+          type  = "s3"
+        }
+      ]
       portMappings = [
         {
           containerPort = 8000
