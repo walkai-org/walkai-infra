@@ -198,3 +198,31 @@ jobs:
           ECR_IMAGE="${{ steps.ecr.outputs.registry }}/${ECR_REPOSITORY}:${IMAGE_TAG}"
           docker tag "${SOURCE_IMAGE}" "${ECR_IMAGE}"
           docker push "${ECR_IMAGE}"
+
+  show_name_servers:
+    needs: load_balancer
+    runs-on: ubuntu-latest
+    env:
+      TERRAFORM_WORKING_DIR: envs/prod/load_balancer
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ secrets.AWS_DEPLOY_ROLE_ARN }}
+          aws-region: ${{ vars.AWS_REGION }}
+
+      - name: Set up Terraform
+        uses: hashicorp/setup-terraform@v3
+
+      - name: Terraform init
+        working-directory: ${{ env.TERRAFORM_WORKING_DIR }}
+        run: terraform init -input=false -upgrade
+
+      - name: Show hosted zone name servers
+        working-directory: ${{ env.TERRAFORM_WORKING_DIR }}
+        run: |
+          echo "Hosted zone name servers:"
+          terraform output -raw hosted_zone_name_servers

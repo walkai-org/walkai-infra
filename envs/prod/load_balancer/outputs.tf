@@ -13,6 +13,11 @@ output "alb_dns_name" {
   value       = module.load_balancer.alb_dns_name
 }
 
+output "api_record_fqdn" {
+  description = "Route53 record FQDN for the API."
+  value       = module.load_balancer.api_record_fqdn
+}
+
 output "alb_zone_id" {
   description = "Route53 zone ID for the ALB."
   value       = module.load_balancer.alb_zone_id

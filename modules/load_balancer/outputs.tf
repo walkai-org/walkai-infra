@@ -8,6 +8,11 @@ output "alb_dns_name" {
   value       = aws_lb.walkai_api_alb.dns_name
 }
 
+output "api_record_fqdn" {
+  description = "FQDN of the Route53 record pointing to the ALB."
+  value       = aws_route53_record.alb_api.fqdn
+}
+
 output "alb_zone_id" {
   description = "Route53 zone ID for the ALB."
   value       = aws_lb.walkai_api_alb.zone_id

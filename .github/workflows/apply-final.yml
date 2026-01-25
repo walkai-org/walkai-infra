@@ -11,7 +11,7 @@ jobs:
   load_balancer:
     runs-on: ubuntu-latest
     outputs:
-      alb_dns_name: ${{ steps.out.outputs.alb_dns_name }}
+      alb_dns_name: ${{ steps.out.outputs.api_record_fqdn }}
     env:
       TERRAFORM_WORKING_DIR: envs/prod/load_balancer
       TF_VAR_base_domain: ${{ vars.BASE_DOMAIN }}
@@ -42,7 +42,7 @@ jobs:
         id: out
         working-directory: ${{ env.TERRAFORM_WORKING_DIR }}
         run: |
-          echo "alb_dns_name=$(terraform output -raw alb_dns_name)" >> "$GITHUB_OUTPUT"
+          echo "api_record_fqdn=$(terraform output -raw api_record_fqdn)" >> "$GITHUB_OUTPUT"
 
   storage_outputs:
     runs-on: ubuntu-latest
