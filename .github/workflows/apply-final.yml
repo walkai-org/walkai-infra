@@ -249,7 +249,9 @@ jobs:
       - name: Write .env.production from ALB DNS
         working-directory: frontend
         run: |
-          echo "VITE_API_BASE = ${ALB_DNS_NAME}" > .env.production
+          echo "VITE_API_BASE=https://${ALB_DNS_NAME}" > .env.production
+          echo "Wrote .env.production:"
+          cat .env.production
 
       - name: Build frontend
         working-directory: frontend
