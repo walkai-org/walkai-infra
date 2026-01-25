@@ -1,0 +1,200 @@
+name: Apply Infra (Bootstrap)
+
+on:
+  push:
+    branches: ["main"]
+  workflow_dispatch:
+
+permissions:
+  id-token: write
+  contents: read
+
+jobs:
+  networking:
+    runs-on: ubuntu-latest
+    env:
+      S3_BUCKET: ${{ vars.AWS_S3_BUCKET }}
+      TERRAFORM_WORKING_DIR: envs/prod/networking
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ secrets.AWS_DEPLOY_ROLE_ARN }}
+          aws-region: ${{ vars.AWS_REGION }}
+
+      - name: Set up Terraform
+        uses: hashicorp/setup-terraform@v3
+
+      - name: Debug workspace info
+        run: |
+          echo "Current working directory: $(pwd)"
+          echo "Listing repo root:"
+          ls -al
+          echo "Listing target Terraform directory: ${{ env.TERRAFORM_WORKING_DIR }}"
+          ls -al "${{ env.TERRAFORM_WORKING_DIR }}" || echo "Directory not found"
+
+      - name: Terraform init
+        working-directory: ${{ env.TERRAFORM_WORKING_DIR }}
+        run: terraform init -input=false -upgrade
+
+      - name: Terraform state debug
+        working-directory: ${{ env.TERRAFORM_WORKING_DIR }}
+        run: |
+          terraform workspace show
+          terraform state list || echo "No resources currently in state"
+
+      - name: Terraform apply
+        working-directory: ${{ env.TERRAFORM_WORKING_DIR }}
+        run: terraform apply -auto-approve -input=false
+
+      - name: Sync repository to S3 (site bucket)
+        run: |
+          aws s3 sync . "s3://${S3_BUCKET}" \
+            --exclude ".git/*" \
+            --exclude ".terraform/*" \
+            --exclude "*.tfstate" \
+            --exclude "*.tfstate.*" \
+            --delete
+
+  storage:
+    needs: networking
+    runs-on: ubuntu-latest
+    outputs:
+      app_client_bucket_name: ${{ steps.out.outputs.app_client_bucket_name }}
+    env:
+      TERRAFORM_WORKING_DIR: envs/prod/storage
+      TF_VAR_bootstrap_first_user_email: ${{ vars.BOOTSTRAP_FIRST_USER }}
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ secrets.AWS_DEPLOY_ROLE_ARN }}
+          aws-region: ${{ vars.AWS_REGION }}
+
+      - name: Set up Terraform
+        uses: hashicorp/setup-terraform@v3
+
+      - name: Terraform init
+        working-directory: ${{ env.TERRAFORM_WORKING_DIR }}
+        run: terraform init -input=false -upgrade
+
+      - name: Terraform apply
+        working-directory: ${{ env.TERRAFORM_WORKING_DIR }}
+        run: terraform apply -auto-approve -input=false
+
+      - name: Capture Storage outputs
+        id: out
+        working-directory: ${{ env.TERRAFORM_WORKING_DIR }}
+        run: |
+          echo "app_client_bucket_name=$(terraform output -raw app_client_bucket_name)" >> "$GITHUB_OUTPUT"
+
+  load_balancer:
+    needs: networking
+    runs-on: ubuntu-latest
+    outputs:
+      alb_dns_name: ${{ steps.out.outputs.alb_dns_name }}
+    env:
+      TERRAFORM_WORKING_DIR: envs/prod/load_balancer
+      TF_VAR_base_domain: ${{ vars.BASE_DOMAIN }}
+      TF_VAR_external_dns: ${{ vars.EXTERNAL_DNS }}
+      TF_VAR_enable_https: "false"
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ secrets.AWS_DEPLOY_ROLE_ARN }}
+          aws-region: ${{ vars.AWS_REGION }}
+
+      - name: Set up Terraform
+        uses: hashicorp/setup-terraform@v3
+
+      - name: Terraform init
+        working-directory: ${{ env.TERRAFORM_WORKING_DIR }}
+        run: terraform init -input=false -upgrade
+
+      - name: Terraform apply
+        working-directory: ${{ env.TERRAFORM_WORKING_DIR }}
+        run: terraform apply -auto-approve -input=false
+
+      - name: Capture Load Balancer outputs
+        id: out
+        working-directory: ${{ env.TERRAFORM_WORKING_DIR }}
+        run: |
+          echo "alb_dns_name=$(terraform output -raw alb_dns_name)" >> "$GITHUB_OUTPUT"
+
+  ecr:
+    needs: networking
+    runs-on: ubuntu-latest
+    outputs:
+      repository_name: ${{ steps.out.outputs.repository_name }}
+      repository_arn: ${{ steps.out.outputs.repository_arn }}
+    env:
+      TERRAFORM_WORKING_DIR: envs/prod/ecr
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ secrets.AWS_DEPLOY_ROLE_ARN }}
+          aws-region: ${{ vars.AWS_REGION }}
+
+      - name: Set up Terraform
+        uses: hashicorp/setup-terraform@v3
+
+      - name: Terraform init
+        working-directory: ${{ env.TERRAFORM_WORKING_DIR }}
+        run: terraform init -input=false -upgrade
+
+      - name: Terraform apply
+        working-directory: ${{ env.TERRAFORM_WORKING_DIR }}
+        run: terraform apply -auto-approve -input=false
+
+      - name: Capture ECR outputs
+        id: out
+        working-directory: ${{ env.TERRAFORM_WORKING_DIR }}
+        run: |
+          echo "repository_name=$(terraform output -raw repository_name)" >> "$GITHUB_OUTPUT"
+          echo "repository_arn=$(terraform output -raw repository_arn)" >> "$GITHUB_OUTPUT"
+
+  push_backend_image:
+    needs: ecr
+    runs-on: ubuntu-latest
+    env:
+      ECR_REPOSITORY: ${{ needs.ecr.outputs.repository_name }}
+      SOURCE_IMAGE: ${{ vars.BACKEND_IMAGE_URL }}
+      IMAGE_TAG: ${{ github.sha }}
+    steps:
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ secrets.AWS_DEPLOY_ROLE_ARN }}
+          aws-region: ${{ vars.AWS_REGION }}
+
+      - name: Login to Amazon ECR
+        uses: aws-actions/amazon-ecr-login@v2
+
+      - name: Resolve ECR registry
+        id: ecr
+        run: echo "registry=$(aws sts get-caller-identity --query Account --output text).dkr.ecr.${{ vars.AWS_REGION }}.amazonaws.com" >> "$GITHUB_OUTPUT"
+
+      - name: Pull public backend image
+        run: docker pull "${SOURCE_IMAGE}"
+
+      - name: Tag and push to ECR
+        env:
+          ECR_REPOSITORY_ARN: ${{ needs.ecr.outputs.repository_arn }}
+        run: |
+          ECR_IMAGE="${{ steps.ecr.outputs.registry }}/${ECR_REPOSITORY}:${IMAGE_TAG}"
+          docker tag "${SOURCE_IMAGE}" "${ECR_IMAGE}"
+          docker push "${ECR_IMAGE}"

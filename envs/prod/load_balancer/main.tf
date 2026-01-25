@@ -27,6 +27,7 @@ module "load_balancer" {
   vpc_id                  = data.terraform_remote_state.networking.outputs.vpc_id
   base_domain             = var.base_domain
   external_dns            = var.external_dns
+  enable_https            = var.enable_https
   ssl_policy              = var.ssl_policy
   tags                    = var.tags
 

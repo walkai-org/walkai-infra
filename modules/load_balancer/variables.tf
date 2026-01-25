@@ -25,6 +25,12 @@ variable "alb_acm_certificate_arn" {
   default     = null
 }
 
+variable "enable_https" {
+  description = "Whether to enable ACM validation and the HTTPS listener."
+  type        = bool
+  default     = true
+}
+
 variable "ssl_policy" {
   description = "SSL policy to use for the HTTPS listener."
   type        = string

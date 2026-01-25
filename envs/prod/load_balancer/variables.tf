@@ -15,6 +15,12 @@ variable "external_dns" {
   default     = true
 }
 
+variable "enable_https" {
+  description = "Whether to enable ACM validation and the HTTPS listener."
+  type        = bool
+  default     = true
+}
+
 variable "ssl_policy" {
   description = "SSL policy for the ALB HTTPS listener."
   type        = string

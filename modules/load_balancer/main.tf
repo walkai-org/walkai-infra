@@ -72,6 +72,7 @@ locals {
   }
 
   alb_certificate_arn = coalesce(var.alb_acm_certificate_arn, aws_acm_certificate.primary.arn)
+  https_enabled       = var.enable_https
 }
 
 resource "aws_route53_record" "acm_validation" {
@@ -85,6 +86,8 @@ resource "aws_route53_record" "acm_validation" {
 }
 
 resource "aws_acm_certificate_validation" "primary" {
+  count = local.https_enabled ? 1 : 0
+
   certificate_arn         = aws_acm_certificate.primary.arn
   validation_record_fqdns = [for record in aws_route53_record.acm_validation : record.fqdn]
 }
@@ -115,7 +118,9 @@ resource "aws_lb_target_group" "api_ecs_tg" {
   )
 }
 
-resource "aws_lb_listener" "http_80" {
+resource "aws_lb_listener" "http_80_redirect" {
+  count = local.https_enabled ? 1 : 0
+
   load_balancer_arn = aws_lb.walkai_api_alb.arn
   port              = 80
   protocol          = "HTTP"
@@ -133,7 +138,22 @@ resource "aws_lb_listener" "http_80" {
     }
   }
 }
+resource "aws_lb_listener" "http_80_forward" {
+  count = local.https_enabled ? 0 : 1
+
+  load_balancer_arn = aws_lb.walkai_api_alb.arn
+  port              = 80
+  protocol          = "HTTP"
+
+  default_action {
+    type             = "forward"
+    target_group_arn = aws_lb_target_group.api_ecs_tg.arn
+  }
+}
+
 resource "aws_lb_listener" "https_443" {
+  count = local.https_enabled ? 1 : 0
+
   load_balancer_arn = aws_lb.walkai_api_alb.arn
   port              = 443
   protocol          = "HTTPS"
