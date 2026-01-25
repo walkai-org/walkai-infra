@@ -28,6 +28,7 @@ module "load_balancer" {
   base_domain             = var.base_domain
   external_dns            = var.external_dns
   enable_https            = var.enable_https
+  existing_https_listener_arn = var.existing_https_listener_arn
   ssl_policy              = var.ssl_policy
   tags                    = var.tags
 

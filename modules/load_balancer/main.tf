@@ -18,15 +18,6 @@ resource "aws_lb" "walkai_api_alb" {
   )
 }
 
-data "aws_lb_listeners" "existing" {
-  load_balancer_arn = aws_lb.walkai_api_alb.arn
-}
-
-data "aws_lb_listener" "existing" {
-  for_each = toset(data.aws_lb_listeners.existing.arns)
-  arn      = each.value
-}
-
 locals {
   web_domain = "walkai.${var.base_domain}"
   api_domain = "api.walkai.${var.base_domain}"
@@ -75,10 +66,7 @@ locals {
 
   alb_certificate_arn = coalesce(var.alb_acm_certificate_arn, aws_acm_certificate.primary.arn)
   https_enabled       = var.enable_https
-  existing_https_listener = length([
-    for listener in data.aws_lb_listener.existing :
-    listener.port if listener.port == 443
-  ]) > 0
+  has_existing_https_listener = var.existing_https_listener_arn != null && var.existing_https_listener_arn != ""
 }
 
 resource "aws_route53_record" "acm_validation" {
@@ -158,7 +146,7 @@ resource "aws_lb_listener" "http_80_forward" {
 }
 
 resource "aws_lb_listener" "https_443" {
-  count = local.https_enabled && !local.existing_https_listener ? 1 : 0
+  count = local.https_enabled && !local.has_existing_https_listener ? 1 : 0
 
   load_balancer_arn = aws_lb.walkai_api_alb.arn
   port              = 443

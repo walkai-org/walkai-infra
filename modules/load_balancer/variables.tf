@@ -31,6 +31,12 @@ variable "enable_https" {
   default     = true
 }
 
+variable "existing_https_listener_arn" {
+  description = "Existing HTTPS listener ARN to reuse instead of creating a new one."
+  type        = string
+  default     = null
+}
+
 variable "ssl_policy" {
   description = "SSL policy to use for the HTTPS listener."
   type        = string
