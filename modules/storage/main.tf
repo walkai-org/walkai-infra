@@ -36,6 +36,7 @@ resource "aws_dynamodb_table" "oauth_tx" {
 
 resource "aws_s3_bucket" "app_client" {
   bucket = var.bucket_name
+  force_destroy = true
 
   tags = merge(
     var.tags,
@@ -47,6 +48,7 @@ resource "aws_s3_bucket" "app_client" {
 
 resource "aws_s3_bucket" "info_site" {
   bucket = var.info_bucket_name
+  force_destroy = true
 
   tags = merge(
     var.tags,
