@@ -63,6 +63,11 @@ output "db_instance_endpoint" {
   value       = try(aws_db_instance.walkai[0].endpoint, null)
 }
 
+output "db_master_secret_arn" {
+  description = "ARN of the Secrets Manager secret for the database master credentials."
+  value       = try(aws_secretsmanager_secret.db_master[0].arn, null)
+}
+
 output "private_subnet_ids" {
   description = "Private subnet IDs used by storage resources."
   value       = var.private_subnet_ids

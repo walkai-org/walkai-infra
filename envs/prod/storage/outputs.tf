@@ -13,6 +13,11 @@ output "info_bucket_arn" {
   value       = module.storage.info_bucket_arn
 }
 
+output "db_master_secret_arn" {
+  description = "ARN of the Secrets Manager secret for the database master credentials."
+  value       = module.storage.db_master_secret_arn
+}
+
 output "cluster_cache_table_arn" {
   description = "Cluster cache DynamoDB table ARN."
   value       = module.storage.cluster_cache_table_arn
