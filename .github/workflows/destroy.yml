@@ -90,6 +90,9 @@ jobs:
     runs-on: ubuntu-latest
     env:
       TERRAFORM_WORKING_DIR: envs/prod/load_balancer
+      TF_VAR_base_domain: ${{ vars.BASE_DOMAIN }}
+      TF_VAR_external_dns: ${{ vars.EXTERNAL_DNS }}
+      TF_VAR_enable_https: "false"
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
