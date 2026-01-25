@@ -132,19 +132,6 @@ resource "aws_lb_listener" "http_80_redirect" {
     }
   }
 }
-resource "aws_lb_listener" "http_80_forward" {
-  count = local.https_enabled ? 0 : 1
-
-  load_balancer_arn = aws_lb.walkai_api_alb.arn
-  port              = 80
-  protocol          = "HTTP"
-
-  default_action {
-    type             = "forward"
-    target_group_arn = aws_lb_target_group.api_ecs_tg.arn
-  }
-}
-
 resource "aws_lb_listener" "https_443" {
   count = local.https_enabled && !local.has_existing_https_listener ? 1 : 0
 
