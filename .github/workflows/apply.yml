@@ -62,6 +62,8 @@ jobs:
   storage:
     needs: networking
     runs-on: ubuntu-latest
+    outputs:
+      app_client_bucket_name: ${{ steps.out.outputs.app_client_bucket_name }}
     env:
       TERRAFORM_WORKING_DIR: envs/prod/storage
       TF_VAR_bootstrap_first_user_email: ${{ vars.BOOTSTRAP_FIRST_USER }}
@@ -85,6 +87,12 @@ jobs:
       - name: Terraform apply
         working-directory: ${{ env.TERRAFORM_WORKING_DIR }}
         run: terraform apply -auto-approve -input=false
+
+      - name: Capture Storage outputs
+        id: out
+        working-directory: ${{ env.TERRAFORM_WORKING_DIR }}
+        run: |
+          echo "app_client_bucket_name=$(terraform output -raw app_client_bucket_name)" >> "$GITHUB_OUTPUT"
 
   load_balancer:
     needs: networking
@@ -294,6 +302,8 @@ jobs:
   web_distribution:
     needs: ecs
     runs-on: ubuntu-latest
+    outputs:
+      cloudfront_distribution_id: ${{ steps.out.outputs.cloudfront_distribution_id }}
     env:
       TERRAFORM_WORKING_DIR: envs/prod/web_distribution
     steps:
@@ -316,3 +326,55 @@ jobs:
       - name: Terraform apply
         working-directory: ${{ env.TERRAFORM_WORKING_DIR }}
         run: terraform apply -auto-approve -input=false
+
+      - name: Capture Web Distribution outputs
+        id: out
+        working-directory: ${{ env.TERRAFORM_WORKING_DIR }}
+        run: |
+          echo "cloudfront_distribution_id=$(terraform output -raw distribution_id)" >> "$GITHUB_OUTPUT"
+
+  deploy_frontend_client:
+    needs: web_distribution
+    runs-on: ubuntu-latest
+    env:
+      APP_CLIENT_BUCKET: ${{ needs.storage.outputs.app_client_bucket_name }}
+      CLOUDFRONT_DISTRIBUTION_ID: ${{ needs.web_distribution.outputs.cloudfront_distribution_id }}
+      FRONTEND_REPO: ${{ vars.FRONTEND_REPO }}
+      FRONTEND_REF: ${{ vars.FRONTEND_REF }}
+    steps:
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ secrets.AWS_DEPLOY_ROLE_ARN }}
+          aws-region: ${{ vars.AWS_REGION }}
+
+      - name: Checkout frontend repo (public)
+        uses: actions/checkout@v4
+        with:
+          repository: ${{ env.FRONTEND_REPO }}
+          ref: ${{ env.FRONTEND_REF }}
+          path: frontend
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: "npm"
+
+      - name: Install dependencies
+        working-directory: frontend
+        run: npm ci
+
+      - name: Build frontend
+        working-directory: frontend
+        run: npm run build
+
+      - name: Upload dist/ to S3 (app client bucket)
+        run: |
+          aws s3 sync "frontend/dist/" "s3://${APP_CLIENT_BUCKET}" --delete
+
+      - name: Invalidate CloudFront cache
+        run: |
+          aws cloudfront create-invalidation \
+            --distribution-id "${CLOUDFRONT_DISTRIBUTION_ID}" \
+            --paths "/*"

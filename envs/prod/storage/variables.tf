@@ -11,6 +11,6 @@ variable "vpc_cidr_block" {
 }
 
 variable "bootstrap_first_user_email" {
-  description = "Email del primer usuario para bootstrap."
+  description = "First user email for bootstrap."
   type        = string
 }

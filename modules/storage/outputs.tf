@@ -54,12 +54,12 @@ output "info_bucket_arn" {
 }
 
 output "bootstrap_first_user_secret_arn" {
-  description = "ARN del secret bootstrap del primer usuario."
+  description = "Bootstrap secret ARN for the first user."
   value       = aws_secretsmanager_secret.bootstrap_first_user.arn
 }
 
 output "bootstrap_first_user_secret_name" {
-  description = "Nombre del secret bootstrap del primer usuario."
+  description = "Bootstrap secret name for the first user."
   value       = aws_secretsmanager_secret.bootstrap_first_user.name
 }
 

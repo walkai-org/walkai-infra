@@ -8,18 +8,23 @@ output "private_subnet_azs" {
   value       = module.storage.private_subnet_azs
 }
 
+output "app_client_bucket_name" {
+  description = "Name of the app client S3 bucket."
+  value       = module.storage.app_client_bucket_name
+}
+
 output "info_bucket_arn" {
   description = "Info bucket ARN."
   value       = module.storage.info_bucket_arn
 }
 
 output "bootstrap_first_user_secret_arn" {
-  description = "ARN del secret bootstrap del primer usuario."
+  description = "Bootstrap secret ARN for the first user."
   value       = module.storage.bootstrap_first_user_secret_arn
 }
 
 output "bootstrap_first_user_secret_name" {
-  description = "Nombre del secret bootstrap del primer usuario."
+  description = "Bootstrap secret name for the first user."
   value       = module.storage.bootstrap_first_user_secret_name
 }
 
