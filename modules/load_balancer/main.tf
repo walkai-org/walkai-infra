@@ -27,6 +27,7 @@ resource "aws_route53_zone" "primary" {
   count = var.external_dns ? 1 : 0
 
   name = var.base_domain
+  force_destroy = true
 
   tags = merge(
     var.tags,
