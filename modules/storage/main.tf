@@ -67,6 +67,7 @@ locals {
 
 resource "aws_secretsmanager_secret" "bootstrap_first_user" {
   name        = var.bootstrap_first_user_secret_name
+  recovery_window_in_days = 0
   description = "Bootstrap first user email for WalkAI."
 
   tags = merge(var.tags, {
