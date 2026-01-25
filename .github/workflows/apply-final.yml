@@ -34,22 +34,6 @@ jobs:
         working-directory: ${{ env.TERRAFORM_WORKING_DIR }}
         run: terraform init -input=false -upgrade
 
-      - name: Detect existing HTTPS listener
-        run: |
-          alb_arn=$(aws elbv2 describe-load-balancers \
-            --names "walkai-api-alb-terraform" \
-            --query "LoadBalancers[0].LoadBalancerArn" \
-            --output text 2>/dev/null)
-          if [ -n "$alb_arn" ] && [ "$alb_arn" != "None" ]; then
-            listener_arn=$(aws elbv2 describe-listeners \
-              --load-balancer-arn "$alb_arn" \
-              --query "Listeners[?Port==\`443\`].ListenerArn | [0]" \
-              --output text 2>/dev/null)
-            if [ -n "$listener_arn" ] && [ "$listener_arn" != "None" ]; then
-              echo "TF_VAR_existing_https_listener_arn=$listener_arn" >> "$GITHUB_ENV"
-            fi
-          fi
-
       - name: Terraform apply
         working-directory: ${{ env.TERRAFORM_WORKING_DIR }}
         run: terraform apply -auto-approve -input=false
