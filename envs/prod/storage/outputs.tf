@@ -13,6 +13,16 @@ output "info_bucket_arn" {
   value       = module.storage.info_bucket_arn
 }
 
+output "bootstrap_first_user_secret_arn" {
+  description = "ARN del secret bootstrap del primer usuario."
+  value       = module.storage.bootstrap_first_user_secret_arn
+}
+
+output "bootstrap_first_user_secret_name" {
+  description = "Nombre del secret bootstrap del primer usuario."
+  value       = module.storage.bootstrap_first_user_secret_name
+}
+
 output "db_master_secret_arn" {
   description = "ARN of the Secrets Manager secret for the database master credentials."
   value       = module.storage.db_master_secret_arn

@@ -9,3 +9,8 @@ variable "vpc_cidr_block" {
   type        = string
   default     = "172.31.0.0/16"
 }
+
+variable "bootstrap_first_user_email" {
+  description = "Email del primer usuario para bootstrap."
+  type        = string
+}

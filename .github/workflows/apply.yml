@@ -64,6 +64,7 @@ jobs:
     runs-on: ubuntu-latest
     env:
       TERRAFORM_WORKING_DIR: envs/prod/storage
+      TF_VAR_bootstrap_first_user_email: ${{ vars.BOOTSTRAP_FIRST_USER }}
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
@@ -258,7 +259,7 @@ jobs:
           DYNAMODB_OAUTH_TABLE=oauth_tx2
           DYNAMODB_CLUSTER_CACHE_TABLE=cluster_cache2
           SCHEDULE_WORKER_ENABLED=true
-          BOOTSTRAP_EMAIL_SECRET_ID=walkai/bootstrap/first_user
+          BOOTSTRAP_EMAIL_SECRET_ID=walkai/bootstrap/first_user2
           EOF
       - name: Upload .env to S3
         run: aws s3 cp .env "s3://${{ steps.out.outputs.info_bucket_name }}/api/.env"

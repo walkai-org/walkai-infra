@@ -65,6 +65,23 @@ locals {
   ]
 }
 
+resource "aws_secretsmanager_secret" "bootstrap_first_user" {
+  name        = var.bootstrap_first_user_secret_name
+  description = "Bootstrap first user email for WalkAI."
+
+  tags = merge(var.tags, {
+    Name = var.bootstrap_first_user_secret_name
+  })
+}
+
+resource "aws_secretsmanager_secret_version" "bootstrap_first_user" {
+  secret_id = aws_secretsmanager_secret.bootstrap_first_user.id
+
+  secret_string = jsonencode({
+    email = var.bootstrap_first_user_email
+  })
+}
+
 resource "aws_db_subnet_group" "walkai" {
   count       = var.create_database ? 1 : 0
   name_prefix = "${var.db_identifier}-subnets-"

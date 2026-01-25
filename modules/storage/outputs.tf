@@ -53,6 +53,16 @@ output "info_bucket_arn" {
   value       = aws_s3_bucket.info_site.arn
 }
 
+output "bootstrap_first_user_secret_arn" {
+  description = "ARN del secret bootstrap del primer usuario."
+  value       = aws_secretsmanager_secret.bootstrap_first_user.arn
+}
+
+output "bootstrap_first_user_secret_name" {
+  description = "Nombre del secret bootstrap del primer usuario."
+  value       = aws_secretsmanager_secret.bootstrap_first_user.name
+}
+
 output "db_instance_identifier" {
   description = "Identifier of the PostgreSQL instance."
   value       = try(aws_db_instance.walkai[0].id, null)

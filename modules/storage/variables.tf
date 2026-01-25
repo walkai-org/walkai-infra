@@ -79,3 +79,14 @@ variable "create_database" {
   type        = bool
   default     = true
 }
+
+variable "bootstrap_first_user_email" {
+  description = "First user email for bootstrap."
+  type        = string
+}
+
+variable "bootstrap_first_user_secret_name" {
+  description = "Bootstrap secret name."
+  type        = string
+  default     = "walkai/bootstrap/first_user2"
+}
