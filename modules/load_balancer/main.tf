@@ -28,7 +28,7 @@ resource "aws_lb_target_group" "api_ecs_tg" {
   health_check {
     enabled             = true
     protocol            = "HTTP"
-    path                = "/"
+    path                = "/health"
     matcher             = "200-399"
     healthy_threshold   = 5
     unhealthy_threshold = 2
