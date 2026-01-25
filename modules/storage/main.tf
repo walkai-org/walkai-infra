@@ -152,8 +152,8 @@ resource "aws_secretsmanager_secret" "db_master" {
 resource "aws_secretsmanager_secret_version" "db_master" {
   count = var.create_database ? 1 : 0
 
-  secret_id     = aws_secretsmanager_secret.db_master[0].id
-  secret_string = "postgresql+psycopg://${var.db_username}:${random_password.db_master[0].result}@${aws_db_instance.walkai[0].address}:5432/${var.db_name}"
+  secret_id = aws_secretsmanager_secret.db_master[0].id
+  secret_string = "postgresql+psycopg://${var.db_username}:${urlencode(random_password.db_master[0].result)}@${aws_db_instance.walkai[0].address}:5432/${var.db_name}"
 
   depends_on = [
     aws_db_instance.walkai
@@ -197,4 +197,3 @@ resource "aws_security_group_rule" "db_ingress_from_allowed_sgs" {
   protocol          = "tcp"
   source_security_group_id = each.value
 }
-
