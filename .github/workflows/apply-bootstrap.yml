@@ -225,4 +225,4 @@ jobs:
         working-directory: ${{ env.TERRAFORM_WORKING_DIR }}
         run: |
           echo "Hosted zone name servers:"
-          terraform output -raw hosted_zone_name_servers
+          terraform output -json hosted_zone_name_servers
