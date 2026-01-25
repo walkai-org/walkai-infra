@@ -21,12 +21,11 @@ resource "aws_lb" "walkai_api_alb" {
 locals {
   web_domain = "walkai.${var.base_domain}"
   api_domain = "api.walkai.${var.base_domain}"
+  hosted_zone_domain = var.external_dns ? local.web_domain : var.base_domain
 }
 
 resource "aws_route53_zone" "primary" {
-  count = var.external_dns ? 1 : 0
-
-  name = var.base_domain
+  name          = local.hosted_zone_domain
   force_destroy = true
 
   tags = merge(
@@ -37,16 +36,9 @@ resource "aws_route53_zone" "primary" {
   )
 }
 
-data "aws_route53_zone" "primary" {
-  count = var.external_dns ? 0 : 1
-
-  name         = var.base_domain
-  private_zone = false
-}
-
 locals {
-  hosted_zone_id = var.external_dns ? aws_route53_zone.primary[0].zone_id : data.aws_route53_zone.primary[0].zone_id
-  name_servers   = var.external_dns ? aws_route53_zone.primary[0].name_servers : data.aws_route53_zone.primary[0].name_servers
+  hosted_zone_id = aws_route53_zone.primary.zone_id
+  name_servers   = aws_route53_zone.primary.name_servers
 }
 
 resource "aws_acm_certificate" "primary" {

@@ -10,7 +10,7 @@ variable "base_domain" {
 }
 
 variable "external_dns" {
-  description = "Whether the base domain is managed externally (create hosted zone to delegate)."
+  description = "Whether the base domain is managed externally (create a hosted zone for walkai.<base_domain> to delegate)."
   type        = bool
   default     = true
 }
