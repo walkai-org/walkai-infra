@@ -97,6 +97,8 @@ jobs:
   load_balancer:
     needs: networking
     runs-on: ubuntu-latest
+    outputs:
+      alb_dns_name: ${{ steps.out.outputs.alb_dns_name }}
     env:
       TERRAFORM_WORKING_DIR: envs/prod/load_balancer
     steps:
@@ -119,6 +121,12 @@ jobs:
       - name: Terraform apply
         working-directory: ${{ env.TERRAFORM_WORKING_DIR }}
         run: terraform apply -auto-approve -input=false
+
+      - name: Capture Load Balancer outputs
+        id: out
+        working-directory: ${{ env.TERRAFORM_WORKING_DIR }}
+        run: |
+          echo "alb_dns_name=$(terraform output -raw alb_dns_name)" >> "$GITHUB_OUTPUT"
 
   ecr:
     needs: networking
@@ -339,6 +347,7 @@ jobs:
     env:
       APP_CLIENT_BUCKET: ${{ needs.storage.outputs.app_client_bucket_name }}
       CLOUDFRONT_DISTRIBUTION_ID: ${{ needs.web_distribution.outputs.cloudfront_distribution_id }}
+      ALB_DNS_NAME: ${{ needs.load_balancer.outputs.alb_dns_name }}
       FRONTEND_REPO: ${{ vars.FRONTEND_REPO }}
       FRONTEND_REF: ${{ vars.FRONTEND_REF }}
     steps:
@@ -368,6 +377,11 @@ jobs:
       - name: Install dependencies
         working-directory: frontend
         run: npm ci
+
+      - name: Write .env.production from ALB DNS
+        working-directory: frontend
+        run: |
+          echo "VITE_API_BASE = ${ALB_DNS_NAME}" > .env.production
 
       - name: Build frontend
         working-directory: frontend
