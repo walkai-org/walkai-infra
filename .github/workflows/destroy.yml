@@ -116,6 +116,7 @@ jobs:
     runs-on: ubuntu-latest
     env:
       TERRAFORM_WORKING_DIR: envs/prod/storage
+      TF_VAR_bootstrap_first_user_email: ${{ vars.BOOTSTRAP_FIRST_USER }}
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
