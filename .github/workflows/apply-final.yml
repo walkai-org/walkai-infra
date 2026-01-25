@@ -43,3 +43,224 @@ jobs:
         working-directory: ${{ env.TERRAFORM_WORKING_DIR }}
         run: |
           echo "alb_dns_name=$(terraform output -raw alb_dns_name)" >> "$GITHUB_OUTPUT"
+
+  storage_outputs:
+    runs-on: ubuntu-latest
+    outputs:
+      app_client_bucket_name: ${{ steps.out.outputs.app_client_bucket_name }}
+    env:
+      TERRAFORM_WORKING_DIR: envs/prod/storage
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ secrets.AWS_DEPLOY_ROLE_ARN }}
+          aws-region: ${{ vars.AWS_REGION }}
+
+      - name: Set up Terraform
+        uses: hashicorp/setup-terraform@v3
+
+      - name: Terraform init
+        working-directory: ${{ env.TERRAFORM_WORKING_DIR }}
+        run: terraform init -input=false -upgrade
+
+      - name: Capture Storage outputs
+        id: out
+        working-directory: ${{ env.TERRAFORM_WORKING_DIR }}
+        run: |
+          echo "app_client_bucket_name=$(terraform output -raw app_client_bucket_name)" >> "$GITHUB_OUTPUT"
+
+  env_file:
+    needs: storage_outputs
+    runs-on: ubuntu-latest
+    outputs:
+      info_bucket_name: ${{ steps.out.outputs.info_bucket_name }}
+    env:
+      TERRAFORM_WORKING_DIR: envs/prod/storage
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ secrets.AWS_DEPLOY_ROLE_ARN }}
+          aws-region: ${{ vars.AWS_REGION }}
+
+      - name: Set up Terraform
+        uses: hashicorp/setup-terraform@v3
+
+      - name: Terraform init
+        working-directory: ${{ env.TERRAFORM_WORKING_DIR }}
+        run: terraform init -input=false -upgrade
+
+      - name: Resolve info bucket name
+        id: out
+        working-directory: ${{ env.TERRAFORM_WORKING_DIR }}
+        run: |
+          arn=$(terraform output -raw info_bucket_arn)
+          bucket_name="${arn#arn:aws:s3:::}"
+          secret_arn=$(terraform output -raw db_master_secret_arn)
+          echo "info_bucket_name=${bucket_name}" >> "$GITHUB_OUTPUT"
+          echo "db_secret_arn=${secret_arn}" >> "$GITHUB_OUTPUT"
+
+      - name: Create .env from Secrets Manager
+        env:
+          APP_AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          APP_AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          ACS_SMTP_PASSWORD: ${{ secrets.ACS_SMTP_PASSWORD }}
+          JWT_SECRET: ${{ secrets.JWT_SECRET }}
+          GITHUB_CLIENT_SECRET: ${{ secrets.CLIENT_SECRET }}
+
+        run: |
+          secret_value=$(aws secretsmanager get-secret-value --secret-id "${{ steps.out.outputs.db_secret_arn }}" --query SecretString --output text)
+          printf "DATABASE_URL=%s\n" "${secret_value}" > .env
+          cat >> .env <<EOF
+          ACS_SMTP_HOST=smtp.azurecomm.net
+          ACS_SMTP_PORT=587
+          ACS_SMTP_USERNAME=walkai
+          ACS_SMTP_PASSWORD=${ACS_SMTP_PASSWORD}
+          MAIL_FROM=noreply@info.walkaiorg.app
+          INVITE_BASE_URL=https://walkaiorg.app/invitations/
+          JWT_SECRET=${JWT_SECRET}
+          JWT_ALGO=HS256
+          ACCESS_MIN=300
+          GITHUB_CLIENT_ID=Ov23liJh3cfjmR4dFTqY
+          GITHUB_CLIENT_SECRET=${GITHUB_CLIENT_SECRET}
+          GITHUB_REDIRECT_URI=https://api.walkaiorg.app/oauth/github/callback
+          FRONTEND_HOME=https://walkaiorg.app/app/
+          JOB_NAMESPACE=walkai
+          K8S_SECRET_ID=walkai/k8s/cluster-creds
+          API_BASE_URL=https://api.walkaiorg.app
+          AWS_ACCESS_KEY_ID=${APP_AWS_ACCESS_KEY_ID}
+          AWS_SECRET_ACCESS_KEY=${APP_AWS_SECRET_ACCESS_KEY}
+          AWS_REGION=us-east-1
+          AWS_S3_BUCKET=walkai-info2
+          ECR_URL=864683107176.dkr.ecr.us-east-1.amazonaws.com/walkai/users2
+          DYNAMODB_OAUTH_TABLE=oauth_tx2
+          DYNAMODB_CLUSTER_CACHE_TABLE=cluster_cache2
+          SCHEDULE_WORKER_ENABLED=true
+          BOOTSTRAP_EMAIL_SECRET_ID=walkai/bootstrap/first_user2
+          EOF
+      - name: Upload .env to S3
+        run: aws s3 cp .env "s3://${{ steps.out.outputs.info_bucket_name }}/api/.env"
+
+  ecs:
+    needs: [load_balancer, env_file]
+    runs-on: ubuntu-latest
+    env:
+      TERRAFORM_WORKING_DIR: envs/prod/ecs
+      INFO_BUCKET_NAME: ${{ needs.env_file.outputs.info_bucket_name }}
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ secrets.AWS_DEPLOY_ROLE_ARN }}
+          aws-region: ${{ vars.AWS_REGION }}
+
+      - name: Set up Terraform
+        uses: hashicorp/setup-terraform@v3
+
+      - name: Terraform init
+        working-directory: ${{ env.TERRAFORM_WORKING_DIR }}
+        run: terraform init -input=false -upgrade
+
+      - name: Terraform apply
+        working-directory: ${{ env.TERRAFORM_WORKING_DIR }}
+        run: terraform apply -auto-approve -input=false
+
+  web_distribution:
+    needs: ecs
+    runs-on: ubuntu-latest
+    outputs:
+      cloudfront_distribution_id: ${{ steps.out.outputs.cloudfront_distribution_id }}
+    env:
+      TERRAFORM_WORKING_DIR: envs/prod/web_distribution
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ secrets.AWS_DEPLOY_ROLE_ARN }}
+          aws-region: ${{ vars.AWS_REGION }}
+
+      - name: Set up Terraform
+        uses: hashicorp/setup-terraform@v3
+
+      - name: Terraform init
+        working-directory: ${{ env.TERRAFORM_WORKING_DIR }}
+        run: terraform init -input=false -upgrade
+
+      - name: Terraform apply
+        working-directory: ${{ env.TERRAFORM_WORKING_DIR }}
+        run: terraform apply -auto-approve -input=false
+
+      - name: Capture Web Distribution outputs
+        id: out
+        working-directory: ${{ env.TERRAFORM_WORKING_DIR }}
+        run: |
+          echo "cloudfront_distribution_id=$(terraform output -raw distribution_id)" >> "$GITHUB_OUTPUT"
+
+  front_upload:
+    needs: [storage_outputs, web_distribution, load_balancer]
+    runs-on: ubuntu-latest
+    env:
+      APP_CLIENT_BUCKET: ${{ needs.storage_outputs.outputs.app_client_bucket_name }}
+      CLOUDFRONT_DISTRIBUTION_ID: ${{ needs.web_distribution.outputs.cloudfront_distribution_id }}
+      ALB_DNS_NAME: ${{ needs.load_balancer.outputs.alb_dns_name }}
+      FRONTEND_REPO: ${{ vars.FRONTEND_REPO }}
+      FRONTEND_REF: ${{ vars.FRONTEND_REF }}
+    steps:
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ secrets.AWS_DEPLOY_ROLE_ARN }}
+          aws-region: ${{ vars.AWS_REGION }}
+
+      - name: Checkout frontend repo (public)
+        uses: actions/checkout@v4
+        with:
+          repository: ${{ env.FRONTEND_REPO }}
+          ref: ${{ env.FRONTEND_REF }}
+          path: frontend
+
+      - name: Debug working directory
+        run: pwd
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: "npm"
+          cache-dependency-path: frontend/package-lock.json
+
+      - name: Install dependencies
+        working-directory: frontend
+        run: npm ci
+
+      - name: Write .env.production from ALB DNS
+        working-directory: frontend
+        run: |
+          echo "VITE_API_BASE = ${ALB_DNS_NAME}" > .env.production
+
+      - name: Build frontend
+        working-directory: frontend
+        run: npm run build
+
+      - name: Upload dist/ to S3 (app client bucket)
+        run: |
+          aws s3 sync "frontend/dist/" "s3://${APP_CLIENT_BUCKET}" --delete
+
+      - name: Invalidate CloudFront cache
+        run: |
+          aws cloudfront create-invalidation \
+            --distribution-id "${CLOUDFRONT_DISTRIBUTION_ID}" \
+            --paths "/*"
