@@ -133,7 +133,8 @@ resource "random_password" "db_master" {
   count   = var.create_database ? 1 : 0
   length  = 20
   special = true
-  override_special = "!#$%&()*+,-.:;<=>?[]^_{|}~"
+  # Restrict to URL-safe special chars to keep the DSN valid without encoding.
+  override_special = "!$&'()*+,;="
 }
 
 resource "aws_secretsmanager_secret" "db_master" {
@@ -153,7 +154,7 @@ resource "aws_secretsmanager_secret_version" "db_master" {
   count = var.create_database ? 1 : 0
 
   secret_id = aws_secretsmanager_secret.db_master[0].id
-  secret_string = "postgresql+psycopg://${var.db_username}:${urlencode(random_password.db_master[0].result)}@${aws_db_instance.walkai[0].address}:5432/${var.db_name}"
+  secret_string = "postgresql+psycopg://${var.db_username}:${random_password.db_master[0].result}@${aws_db_instance.walkai[0].address}:5432/${var.db_name}"
 
   depends_on = [
     aws_db_instance.walkai
