@@ -334,7 +334,7 @@ jobs:
           echo "cloudfront_distribution_id=$(terraform output -raw distribution_id)" >> "$GITHUB_OUTPUT"
 
   deploy_frontend_client:
-    needs: web_distribution
+    needs: [storage, web_distribution]
     runs-on: ubuntu-latest
     env:
       APP_CLIENT_BUCKET: ${{ needs.storage.outputs.app_client_bucket_name }}
