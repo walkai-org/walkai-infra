@@ -8,9 +8,21 @@ variable "vpc_id" {
   type        = string
 }
 
-variable "alb_acm_certificate_arn" {
-  description = "ACM certificate ARN for the HTTPS listener."
+variable "base_domain" {
+  description = "Base domain name (e.g., walkaiorg.app)."
   type        = string
+}
+
+variable "external_dns" {
+  description = "Whether the base domain is managed externally (create hosted zone to delegate)."
+  type        = bool
+  default     = true
+}
+
+variable "alb_acm_certificate_arn" {
+  description = "ACM certificate ARN for the HTTPS listener (optional override)."
+  type        = string
+  default     = null
 }
 
 variable "ssl_policy" {

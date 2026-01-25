@@ -47,7 +47,7 @@ resource "aws_cloudfront_distribution" "this" {
   enabled             = true
   is_ipv6_enabled     = true
   default_root_object = "index.html"
-  # aliases             = ["walkaiorg.app", "www.walkaiorg.app"]
+  aliases             = var.aliases
 
   origin {
     domain_name = data.aws_s3_bucket.app_client.bucket_regional_domain_name
@@ -88,7 +88,7 @@ resource "aws_cloudfront_distribution" "this" {
   }
 
   viewer_certificate {
-    acm_certificate_arn            = "arn:aws:acm:us-east-1:864683107176:certificate/86052bbd-79a2-4037-8ef2-b749fdf89197"
+    acm_certificate_arn            = var.acm_certificate_arn
     ssl_support_method             = "sni-only"
     minimum_protocol_version       = "TLSv1.2_2021"
     cloudfront_default_certificate = false
@@ -104,4 +104,16 @@ resource "aws_cloudfront_distribution" "this" {
   depends_on = [
     aws_s3_bucket_policy.app_client
   ]
+}
+
+resource "aws_route53_record" "cloudfront_web" {
+  zone_id = var.hosted_zone_id
+  name    = var.web_domain
+  type    = "A"
+
+  alias {
+    name                   = aws_cloudfront_distribution.this.domain_name
+    zone_id                = aws_cloudfront_distribution.this.hosted_zone_id
+    evaluate_target_health = false
+  }
 }

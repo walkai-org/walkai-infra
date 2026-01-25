@@ -12,3 +12,38 @@ output "alb_dns_name" {
   description = "DNS name for the load balancer."
   value       = module.load_balancer.alb_dns_name
 }
+
+output "alb_zone_id" {
+  description = "Route53 zone ID for the ALB."
+  value       = module.load_balancer.alb_zone_id
+}
+
+output "base_domain" {
+  description = "Base domain name."
+  value       = module.load_balancer.base_domain
+}
+
+output "external_dns" {
+  description = "Whether the base domain is managed externally."
+  value       = module.load_balancer.external_dns
+}
+
+output "hosted_zone_id" {
+  description = "Hosted zone ID for the base domain."
+  value       = module.load_balancer.hosted_zone_id
+}
+
+output "hosted_zone_name_servers" {
+  description = "Name servers for the hosted zone."
+  value       = module.load_balancer.hosted_zone_name_servers
+}
+
+output "acm_certificate_arn" {
+  description = "ACM certificate ARN covering walkai subdomains."
+  value       = module.load_balancer.acm_certificate_arn
+}
+
+output "acm_validation_records" {
+  description = "DNS records required to validate the ACM certificate."
+  value       = module.load_balancer.acm_validation_records
+}

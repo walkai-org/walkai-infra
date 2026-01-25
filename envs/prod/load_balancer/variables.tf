@@ -4,22 +4,15 @@ variable "region" {
   default     = "us-east-1"
 }
 
-variable "public_subnet_ids" {
-  description = "Public subnets for the ALB."
-  type        = list(string)
-  default     = []
+variable "base_domain" {
+  description = "Base domain name (e.g., walkaiorg.app)."
+  type        = string
 }
 
-variable "vpc_id" {
-  description = "VPC ID that hosts the ALB."
-  type        = string
-  default     = ""
-}
-
-variable "alb_acm_certificate_arn" {
-  description = "ACM certificate ARN for the ALB HTTPS listener."
-  type        = string
-  default     = "arn:aws:acm:us-east-1:864683107176:certificate/86052bbd-79a2-4037-8ef2-b749fdf89197"
+variable "external_dns" {
+  description = "Whether the base domain is managed externally (create hosted zone to delegate)."
+  type        = bool
+  default     = true
 }
 
 variable "ssl_policy" {

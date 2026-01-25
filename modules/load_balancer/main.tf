@@ -18,6 +18,77 @@ resource "aws_lb" "walkai_api_alb" {
   )
 }
 
+locals {
+  web_domain = "walkai.${var.base_domain}"
+  api_domain = "api.walkai.${var.base_domain}"
+}
+
+resource "aws_route53_zone" "primary" {
+  count = var.external_dns ? 1 : 0
+
+  name = var.base_domain
+
+  tags = merge(
+    var.tags,
+    {
+      Name = "walkai-base-zone"
+    }
+  )
+}
+
+data "aws_route53_zone" "primary" {
+  count = var.external_dns ? 0 : 1
+
+  name         = var.base_domain
+  private_zone = false
+}
+
+locals {
+  hosted_zone_id = var.external_dns ? aws_route53_zone.primary[0].zone_id : data.aws_route53_zone.primary[0].zone_id
+  name_servers   = var.external_dns ? aws_route53_zone.primary[0].name_servers : data.aws_route53_zone.primary[0].name_servers
+}
+
+resource "aws_acm_certificate" "primary" {
+  domain_name               = local.web_domain
+  subject_alternative_names = [local.api_domain]
+  validation_method         = "DNS"
+
+  tags = merge(
+    var.tags,
+    {
+      Name = "walkai-walkai-cert"
+    }
+  )
+}
+
+locals {
+  acm_validation_records = {
+    for dvo in aws_acm_certificate.primary.domain_validation_options :
+    dvo.domain_name => {
+      name  = dvo.resource_record_name
+      type  = dvo.resource_record_type
+      value = dvo.resource_record_value
+    }
+  }
+
+  alb_certificate_arn = coalesce(var.alb_acm_certificate_arn, aws_acm_certificate.primary.arn)
+}
+
+resource "aws_route53_record" "acm_validation" {
+  for_each = local.acm_validation_records
+
+  zone_id = local.hosted_zone_id
+  name    = each.value.name
+  type    = each.value.type
+  ttl     = 300
+  records = [each.value.value]
+}
+
+resource "aws_acm_certificate_validation" "primary" {
+  certificate_arn         = aws_acm_certificate.primary.arn
+  validation_record_fqdns = [for record in aws_route53_record.acm_validation : record.fqdn]
+}
+
 resource "aws_lb_target_group" "api_ecs_tg" {
   name = "api-ecs-terraform"
   vpc_id      = var.vpc_id
@@ -68,11 +139,27 @@ resource "aws_lb_listener" "https_443" {
   protocol          = "HTTPS"
 
   ssl_policy      = var.ssl_policy
-  certificate_arn = var.alb_acm_certificate_arn
+  certificate_arn = local.alb_certificate_arn
 
   default_action {
     type             = "forward"
     target_group_arn = aws_lb_target_group.api_ecs_tg.arn
+  }
+
+  depends_on = [
+    aws_acm_certificate_validation.primary
+  ]
+}
+
+resource "aws_route53_record" "alb_api" {
+  zone_id = local.hosted_zone_id
+  name    = local.api_domain
+  type    = "A"
+
+  alias {
+    name                   = aws_lb.walkai_api_alb.dns_name
+    zone_id                = aws_lb.walkai_api_alb.zone_id
+    evaluate_target_health = false
   }
 }
 
