@@ -258,7 +258,7 @@ jobs:
           DYNAMODB_OAUTH_TABLE=oauth_tx2
           DYNAMODB_CLUSTER_CACHE_TABLE=cluster_cache2
           SCHEDULE_WORKER_ENABLED=true
-          BOOTSTRAP_EMAIL_SECRET_ID=gtangari@correo.um.edu.uy
+          BOOTSTRAP_EMAIL_SECRET_ID=walkai/bootstrap/first_user
           EOF
       - name: Upload .env to S3
         run: aws s3 cp .env "s3://${{ steps.out.outputs.info_bucket_name }}/api/.env"
