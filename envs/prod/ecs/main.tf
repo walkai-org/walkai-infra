@@ -63,6 +63,7 @@ module "ecs" {
   info_bucket_arn         = data.terraform_remote_state.storage.outputs.info_bucket_arn
   cluster_cache_table_arn = data.terraform_remote_state.storage.outputs.cluster_cache_table_arn
   oauth_table_arn         = data.terraform_remote_state.storage.outputs.oauth_table_arn
+  bootstrap_first_user_secret_arn = data.terraform_remote_state.storage.outputs.bootstrap_first_user_secret_arn
 
   depends_on = [
     data.terraform_remote_state.networking,

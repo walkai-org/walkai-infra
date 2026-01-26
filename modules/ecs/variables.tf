@@ -53,3 +53,8 @@ variable "oauth_table_arn" {
   description = "ARN of the OAuth DynamoDB table."
   type        = string
 }
+
+variable "bootstrap_first_user_secret_arn" {
+  description = "ARN of the first user bootstrap secret"
+  type = string
+}

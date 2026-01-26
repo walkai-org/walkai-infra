@@ -13,7 +13,6 @@ jobs:
   networking:
     runs-on: ubuntu-latest
     env:
-      S3_BUCKET: ${{ vars.AWS_S3_BUCKET }}
       TERRAFORM_WORKING_DIR: envs/prod/networking
     steps:
       - name: Checkout repository
@@ -49,15 +48,6 @@ jobs:
       - name: Terraform apply
         working-directory: ${{ env.TERRAFORM_WORKING_DIR }}
         run: terraform apply -auto-approve -input=false
-
-      - name: Sync repository to S3 (site bucket)
-        run: |
-          aws s3 sync . "s3://${S3_BUCKET}" \
-            --exclude ".git/*" \
-            --exclude ".terraform/*" \
-            --exclude "*.tfstate" \
-            --exclude "*.tfstate.*" \
-            --delete
 
   storage:
     needs: networking

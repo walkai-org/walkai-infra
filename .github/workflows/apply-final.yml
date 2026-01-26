@@ -109,8 +109,6 @@ jobs:
 
       - name: Create .env from Secrets Manager
         env:
-          APP_AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
-          APP_AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
           ACS_SMTP_PASSWORD: ${{ secrets.ACS_SMTP_PASSWORD }}
           JWT_SECRET: ${{ secrets.JWT_SECRET }}
           GITHUB_CLIENT_SECRET: ${{ secrets.CLIENT_SECRET }}
@@ -135,8 +133,6 @@ jobs:
           JOB_NAMESPACE=walkai
           K8S_SECRET_ID=walkai/k8s/cluster-creds
           API_BASE_URL=https://api.walkaiorg.app
-          AWS_ACCESS_KEY_ID=${APP_AWS_ACCESS_KEY_ID}
-          AWS_SECRET_ACCESS_KEY=${APP_AWS_SECRET_ACCESS_KEY}
           AWS_REGION=us-east-1
           AWS_S3_BUCKET=walkai-info2
           ECR_URL=864683107176.dkr.ecr.us-east-1.amazonaws.com/walkai/users2
