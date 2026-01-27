@@ -148,6 +148,7 @@ jobs:
     runs-on: ubuntu-latest
     env:
       TERRAFORM_WORKING_DIR: envs/prod/networking
+      TF_VAR_vpc_cidr: ${{ vars.VPC_CIDR }}
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
