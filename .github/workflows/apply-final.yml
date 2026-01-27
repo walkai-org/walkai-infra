@@ -48,6 +48,11 @@ jobs:
     runs-on: ubuntu-latest
     outputs:
       app_client_bucket_name: ${{ steps.out.outputs.app_client_bucket_name }}
+      info_bucket_name: ${{ steps.out.outputs.info_bucket_name }}
+      oauth_table_name: ${{ steps.out.outputs.oauth_table_name }}
+      cluster_cache_table_name: ${{ steps.out.outputs.cluster_cache_table_name }}
+      k8s_cluster_credentials_secret_name: ${{ steps.out.outputs.k8s_cluster_credentials_secret_name }}
+      bootstrap_first_user_secret_name: ${{ steps.out.outputs.bootstrap_first_user_secret_name }}
     env:
       TERRAFORM_WORKING_DIR: envs/prod/storage
     steps:
@@ -72,9 +77,43 @@ jobs:
         working-directory: ${{ env.TERRAFORM_WORKING_DIR }}
         run: |
           echo "app_client_bucket_name=$(terraform output -raw app_client_bucket_name)" >> "$GITHUB_OUTPUT"
+          echo "info_bucket_name=$(terraform output -raw info_bucket_name)" >> "$GITHUB_OUTPUT"
+          echo "oauth_table_name=$(terraform output -raw oauth_table_name)" >> "$GITHUB_OUTPUT"
+          echo "cluster_cache_table_name=$(terraform output -raw cluster_cache_table_name)" >> "$GITHUB_OUTPUT"
+          echo "k8s_cluster_credentials_secret_name=$(terraform output -raw k8s_cluster_credentials_secret_name)" >> "$GITHUB_OUTPUT"
+          echo "bootstrap_first_user_secret_name=$(terraform output -raw bootstrap_first_user_secret_name)" >> "$GITHUB_OUTPUT"
+
+  ecr_outputs:
+    runs-on: ubuntu-latest
+    outputs:
+      repository_url: ${{ steps.out.outputs.repository_url }}
+    env:
+      TERRAFORM_WORKING_DIR: envs/prod/ecr
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ secrets.AWS_DEPLOY_ROLE_ARN }}
+          aws-region: ${{ vars.AWS_REGION }}
+
+      - name: Set up Terraform
+        uses: hashicorp/setup-terraform@v3
+
+      - name: Terraform init
+        working-directory: ${{ env.TERRAFORM_WORKING_DIR }}
+        run: terraform init -input=false -upgrade
+
+      - name: Capture ECR outputs
+        id: out
+        working-directory: ${{ env.TERRAFORM_WORKING_DIR }}
+        run: |
+          echo "repository_url=$(terraform output -raw repository_url)" >> "$GITHUB_OUTPUT"
 
   env_file:
-    needs: storage_outputs
+    needs: [storage_outputs, ecr_outputs]
     runs-on: ubuntu-latest
     outputs:
       info_bucket_name: ${{ steps.out.outputs.info_bucket_name }}
@@ -97,14 +136,12 @@ jobs:
         working-directory: ${{ env.TERRAFORM_WORKING_DIR }}
         run: terraform init -input=false -upgrade
 
-      - name: Resolve info bucket name
+      - name: Resolve env outputs
         id: out
         working-directory: ${{ env.TERRAFORM_WORKING_DIR }}
         run: |
-          arn=$(terraform output -raw info_bucket_arn)
-          bucket_name="${arn#arn:aws:s3:::}"
           secret_arn=$(terraform output -raw db_master_secret_arn)
-          echo "info_bucket_name=${bucket_name}" >> "$GITHUB_OUTPUT"
+          echo "info_bucket_name=${{ needs.storage_outputs.outputs.info_bucket_name }}" >> "$GITHUB_OUTPUT"
           echo "db_secret_arn=${secret_arn}" >> "$GITHUB_OUTPUT"
 
       - name: Create .env from Secrets Manager
@@ -117,30 +154,30 @@ jobs:
           secret_value=$(aws secretsmanager get-secret-value --secret-id "${{ steps.out.outputs.db_secret_arn }}" --query SecretString --output text)
           printf "DATABASE_URL=%s\n" "${secret_value}" > .env
           cat >> .env <<EOF
-          ACS_SMTP_HOST=smtp.azurecomm.net
-          ACS_SMTP_PORT=587
-          ACS_SMTP_USERNAME=walkai
+          ACS_SMTP_HOST=${{ vars.ACS_SMTP_HOST }}
+          ACS_SMTP_PORT=${{ vars.ACS_SMTP_PORT }}
+          ACS_SMTP_USERNAME=${{ vars.ACS_SMTP_USERNAME }}
           ACS_SMTP_PASSWORD=${ACS_SMTP_PASSWORD}
-          MAIL_FROM=noreply@info.walkaiorg.app
-          INVITE_BASE_URL=https://walkai.walkaiorg.app/invitations/
+          MAIL_FROM=${{ vars.MAIL_FROM }}
+          INVITE_BASE_URL=https://walkai.${{ vars.BASE_DOMAIN }}/invitations/
           JWT_SECRET=${JWT_SECRET}
           JWT_ALGO=HS256
           ACCESS_MIN=300
           GITHUB_CLIENT_ID=Ov23liJh3cfjmR4dFTqY
           GITHUB_CLIENT_SECRET=${GITHUB_CLIENT_SECRET}
-          GITHUB_REDIRECT_URI=https://api.walkai.walkaiorg.app/oauth/github/callback
-          FRONTEND_HOME=https://walkai.walkaiorg.app/app/
-          CORS_ALLOW_ORIGINS=["https://walkai.walkaiorg.app","https://www.walkai.walkaiorg.app"]
+          GITHUB_REDIRECT_URI=https://api.walkai.${{ vars.BASE_DOMAIN }}/oauth/github/callback
+          FRONTEND_HOME=https://walkai.${{ vars.BASE_DOMAIN }}/app/
+          CORS_ALLOW_ORIGINS=["https://walkai.${{ vars.BASE_DOMAIN }}","https://www.walkai.${{ vars.BASE_DOMAIN }}"]
           JOB_NAMESPACE=walkai
-          K8S_SECRET_ID=walkai/k8s/cluster-creds2
-          API_BASE_URL=https://api.walkai.walkaiorg.app
-          AWS_REGION=us-east-1
-          AWS_S3_BUCKET=walkai-info2
-          ECR_URL=864683107176.dkr.ecr.us-east-1.amazonaws.com/walkai/users2
-          DYNAMODB_OAUTH_TABLE=oauth_tx2
-          DYNAMODB_CLUSTER_CACHE_TABLE=cluster_cache2
+          K8S_SECRET_ID=${{ needs.storage_outputs.outputs.k8s_cluster_credentials_secret_name }}
+          API_BASE_URL=https://api.walkai.${{ vars.BASE_DOMAIN }}
+          AWS_REGION=${{ vars.AWS_REGION }}
+          AWS_S3_BUCKET=${{ needs.storage_outputs.outputs.info_bucket_name }}
+          ECR_URL=${{ needs.ecr_outputs.outputs.repository_url }}
+          DYNAMODB_OAUTH_TABLE=${{ needs.storage_outputs.outputs.oauth_table_name }}
+          DYNAMODB_CLUSTER_CACHE_TABLE=${{ needs.storage_outputs.outputs.cluster_cache_table_name }}
           SCHEDULE_WORKER_ENABLED=true
-          BOOTSTRAP_EMAIL_SECRET_ID=walkai/bootstrap/first_user2
+          BOOTSTRAP_EMAIL_SECRET_ID=${{ needs.storage_outputs.outputs.bootstrap_first_user_secret_name }}
           EOF
       - name: Upload .env to S3
         run: aws s3 cp .env "s3://${{ steps.out.outputs.info_bucket_name }}/api/.env"

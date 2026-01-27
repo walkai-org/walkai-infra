@@ -13,6 +13,11 @@ output "app_client_bucket_name" {
   value       = module.storage.app_client_bucket_name
 }
 
+output "info_bucket_name" {
+  description = "Name of the info S3 bucket."
+  value       = module.storage.info_bucket_name
+}
+
 output "info_bucket_arn" {
   description = "Info bucket ARN."
   value       = module.storage.info_bucket_arn
@@ -48,7 +53,17 @@ output "cluster_cache_table_arn" {
   value       = module.storage.cluster_cache_table_arn
 }
 
+output "cluster_cache_table_name" {
+  description = "Cluster cache DynamoDB table name."
+  value       = module.storage.cluster_cache_table_name
+}
+
 output "oauth_table_arn" {
   description = "OAuth DynamoDB table ARN."
   value       = module.storage.oauth_table_arn
+}
+
+output "oauth_table_name" {
+  description = "OAuth DynamoDB table name."
+  value       = module.storage.oauth_table_name
 }
