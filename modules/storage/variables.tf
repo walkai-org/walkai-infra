@@ -80,6 +80,22 @@ variable "create_database" {
   default     = true
 }
 
+variable "k8s_cluster_url" {
+  description = "Kubernetes cluster url."
+  type        = string
+}
+
+variable "k8s_cluster_token" {
+  description = "Kubernetes cluster token."
+  type        = string
+}
+
+variable "k8s_cluster_credentials_secret_name" {
+  description = "Kubernetes cluster credentials secret name."
+  type        = string
+  default     = "walkai/k8s/cluster-creds2"
+}
+
 variable "bootstrap_first_user_email" {
   description = "First user email for bootstrap."
   type        = string

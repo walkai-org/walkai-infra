@@ -49,6 +49,20 @@ resource "aws_cloudfront_distribution" "this" {
   default_root_object = "index.html"
   aliases             = var.aliases
 
+  custom_error_response {
+    error_code            = 403
+    response_code         = 200
+    response_page_path    = "/index.html"
+    error_caching_min_ttl = 10
+  }
+
+  custom_error_response {
+    error_code            = 404
+    response_code         = 200
+    response_page_path    = "/index.html"
+    error_caching_min_ttl = 10
+  }
+
   origin {
     domain_name = data.aws_s3_bucket.app_client.bucket_regional_domain_name
     origin_id   = local.origin_id

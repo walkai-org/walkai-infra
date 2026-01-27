@@ -54,7 +54,12 @@ variable "oauth_table_arn" {
   type        = string
 }
 
+variable "k8s_cluster_credentials_secret_arn" {
+  description = "Kubernetes cluster credentials secret ARN."
+  type = string
+}
+
 variable "bootstrap_first_user_secret_arn" {
-  description = "ARN of the first user bootstrap secret"
+  description = "ARN of the first user bootstrap secret."
   type = string
 }

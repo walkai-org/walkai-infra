@@ -249,6 +249,32 @@ resource "aws_iam_role_policy_attachment" "walkai_bucket_rw_policy_attachment" {
   policy_arn = aws_iam_policy.walkai_bucket_rw_policy.arn
 }
 
+resource "aws_iam_policy" "k8s_cluster_credentials_secret_get_policy" {
+  name        = "secrets_manager_cluster_creds2"
+  description = "Allow get/describe the secret of the kubernetes cluster credentials."
+
+  policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [
+      {
+        Sid    = "AllowReadWriteK8sSecret"
+        Effect = "Allow"
+        Action = [
+          "secretsmanager:GetSecretValue",
+          "secretsmanager:PutSecretValue",
+          "secretsmanager:DescribeSecret"
+        ]
+        Resource = var.k8s_cluster_credentials_secret_arn
+      }
+    ]
+  })
+}
+
+resource "aws_iam_role_policy_attachment" "k8s_cluster_credentials_secret_policy_attachment" {
+  role       = aws_iam_role.walkai_api_task_role.name
+  policy_arn = aws_iam_policy.k8s_cluster_credentials_secret_get_policy.arn
+}
+
 resource "aws_iam_policy" "bootstrap_first_user_secret_get_policy" {
   name        = "secrets_manager_bootstrap_email2"
   description = "Allow get/describe the secret of the first user email."

@@ -18,6 +18,16 @@ output "info_bucket_arn" {
   value       = module.storage.info_bucket_arn
 }
 
+output "k8s_cluster_credentials_secret_arn" {
+  description = "Kubernetes cluster credentials secret ARN."
+  value       = module.storage.k8s_cluster_credentials_secret_arn
+}
+
+output "k8s_cluster_credentials_secret_name" {
+  description = "Kubernetes cluster credentials secret name."
+  value       = module.storage.k8s_cluster_credentials_secret_name
+}
+
 output "bootstrap_first_user_secret_arn" {
   description = "Bootstrap secret ARN for the first user."
   value       = module.storage.bootstrap_first_user_secret_arn

@@ -56,6 +56,8 @@ jobs:
       app_client_bucket_name: ${{ steps.out.outputs.app_client_bucket_name }}
     env:
       TERRAFORM_WORKING_DIR: envs/prod/storage
+      TF_VAR_k8s_cluster_url: ${{ vars.K8S_CLUSTER_URL }}
+      TF_VAR_k8s_cluster_token: ${{ secrets.K8S_CLUSTER_TOKEN }}
       TF_VAR_bootstrap_first_user_email: ${{ vars.BOOTSTRAP_FIRST_USER }}
     steps:
       - name: Checkout repository

@@ -53,6 +53,16 @@ output "info_bucket_arn" {
   value       = aws_s3_bucket.info_site.arn
 }
 
+output "k8s_cluster_credentials_secret_arn" {
+  description = "Kubernetes cluster credentials secret ARN."
+  value       = aws_secretsmanager_secret.k8s_cluster_credentials.arn
+}
+
+output "k8s_cluster_credentials_secret_name" {
+  description = "Kubernetes cluster credentials secret name."
+  value       = aws_secretsmanager_secret.k8s_cluster_credentials.name
+}
+
 output "bootstrap_first_user_secret_arn" {
   description = "Bootstrap secret ARN for the first user."
   value       = aws_secretsmanager_secret.bootstrap_first_user.arn

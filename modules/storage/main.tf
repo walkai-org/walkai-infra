@@ -65,6 +65,26 @@ locals {
   ]
 }
 
+resource "aws_secretsmanager_secret" "k8s_cluster_credentials" {
+  name        = var.k8s_cluster_credentials_secret_name
+  recovery_window_in_days = 0
+  description = "Kubernetes cluster credentials."
+
+  tags = merge(var.tags, {
+    Name = var.k8s_cluster_credentials_secret_name
+  })
+}
+
+resource "aws_secretsmanager_secret_version" "k8s_cluster_credentials" {
+  secret_id = aws_secretsmanager_secret.k8s_cluster_credentials.id
+
+  secret_string = jsonencode({
+    cluster_url = var.k8s_cluster_url,
+    cluster_token = var.k8s_cluster_token
+  })
+}
+
+
 resource "aws_secretsmanager_secret" "bootstrap_first_user" {
   name        = var.bootstrap_first_user_secret_name
   recovery_window_in_days = 0
