@@ -35,9 +35,10 @@ module "storage" {
 
   table_name        = "walkai_cluster_cache"
   oauth_table_name  = "walkai_oauth_tx"
-  bucket_name       = "walkaiorg.app-client2"
-  info_bucket_name  = "walkai-info2"
+  bucket_name       = "walkaiorg.app-client"
+  info_bucket_name  = "walkai-info"
   vpc_id            = data.terraform_remote_state.networking.outputs.vpc_id
+  name_suffix       = data.terraform_remote_state.networking.outputs.name_suffix
   private_subnet_ids = local.private_subnet_ids
   private_subnet_azs = local.private_subnet_azs
   db_allowed_security_group_ids = local.db_allowed_security_group_ids

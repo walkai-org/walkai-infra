@@ -2,12 +2,30 @@ provider "aws" {
   region = var.region
 }
 
+terraform {
+  required_providers {
+    random = {
+      source  = "hashicorp/random"
+      version = "~> 3.6"
+    }
+  }
+}
+
+resource "random_string" "name_suffix" {
+  length  = 6
+  upper   = false
+  lower   = true
+  numeric = true
+  special = false
+}
+
 module "networking" {
   source = "../../../modules/networking"
 
   name     = "walkai-prod-networking"
   vpc_cidr = var.vpc_cidr
   region   = var.region
+  name_suffix = random_string.name_suffix.result
 
   subnets = {
     public_a = {

@@ -52,6 +52,7 @@ module "ecs" {
   repository_name       = data.terraform_remote_state.ecr.outputs.repository_name
   repository_url        = data.terraform_remote_state.ecr.outputs.repository_url
   users_repository_arn  = data.terraform_remote_state.ecr.outputs.users_repository_arn
+  name_suffix           = data.terraform_remote_state.networking.outputs.name_suffix
   tags                  = var.tags
   vpc_id                = data.terraform_remote_state.networking.outputs.vpc_id
   alb_security_group_id = data.terraform_remote_state.load_balancer.outputs.alb_security_group_id

@@ -6,7 +6,7 @@ variable "repository_name" {
 variable "users_repository_name" {
   description = "Name of the users ECR repository."
   type        = string
-  default     = "walkai/users2"
+  default     = "walkai/users"
 }
 
 variable "image_tag_mutability" {
@@ -19,4 +19,9 @@ variable "tags" {
   description = "Tags to apply to the ECR repositories."
   type        = map(string)
   default     = {}
+}
+
+variable "name_suffix" {
+  description = "Shared suffix appended to unique resource names."
+  type        = string
 }

@@ -17,3 +17,8 @@ output "default_security_group_id" {
   description = "Default security group ID associated with the VPC."
   value       = module.networking.default_security_group_id
 }
+
+output "name_suffix" {
+  description = "Shared suffix appended to unique resource names."
+  value       = random_string.name_suffix.result
+}

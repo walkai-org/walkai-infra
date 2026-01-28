@@ -37,7 +37,7 @@ resource "aws_security_group" "sg_ecs" {
 }
 
 resource "aws_ecs_cluster" "walkai" {
-  name = "walkai-cluster2"
+  name = "walkai-cluster-${var.name_suffix}"
 
   setting {
     name  = "containerInsights"
@@ -48,7 +48,7 @@ resource "aws_ecs_cluster" "walkai" {
 }
 
 resource "aws_iam_role" "task_execution_role" {
-  name = "task_execution_role2"
+  name = "task_execution_role-${var.name_suffix}"
 
   assume_role_policy = jsonencode({
     Version = "2012-10-17"
@@ -67,7 +67,7 @@ resource "aws_iam_role" "task_execution_role" {
 }
 
 resource "aws_iam_role_policy" "task_execution_role_env_policy" {
-  name = "get_web_api_env2"
+  name = "get_web_api_env-${var.name_suffix}"
   role = aws_iam_role.task_execution_role.id
 
   policy = jsonencode({
@@ -92,7 +92,7 @@ resource "aws_iam_role_policy_attachment" "task_execution_role_policy" {
 }
 
 resource "aws_iam_role" "walkai_api_task_role" {
-  name = "walkai_api_task_role2"
+  name = "walkai_api_task_role-${var.name_suffix}"
 
   assume_role_policy = jsonencode({
     Version = "2012-10-17"
@@ -111,7 +111,7 @@ resource "aws_iam_role" "walkai_api_task_role" {
 }
 
 resource "aws_iam_policy" "ecr_access_policy" {
-  name        = "ecr_access2"
+  name        = "ecr_access-${var.name_suffix}"
   description = "Custom ECR access policy for the walkai API task role."
 
   policy = jsonencode({
@@ -169,7 +169,7 @@ resource "aws_iam_role_policy_attachment" "walkai_api_task_role_policy_attachmen
 }
 
 resource "aws_iam_policy" "cluster_cache_rw_policy" {
-  name        = "put_and_delete_items_ddb_cluster_cache_table2"
+  name        = "put_and_delete_items_ddb_cluster_cache_table-${var.name_suffix}"
   description = "Allow read/write access to the cluster_cache DynamoDB table."
 
   policy = jsonencode({
@@ -194,7 +194,7 @@ resource "aws_iam_role_policy_attachment" "cluster_cache_rw_policy_attachment" {
 }
 
 resource "aws_iam_policy" "oauth_rw_policy" {
-  name        = "put_and_delete_items_ddb_oauth_table2"
+  name        = "put_and_delete_items_ddb_oauth_table-${var.name_suffix}"
   description = "Allow write/delete access to the oauth DynamoDB table."
 
   policy = jsonencode({
@@ -219,7 +219,7 @@ resource "aws_iam_role_policy_attachment" "oauth_rw_policy_attachment" {
 }
 
 resource "aws_iam_policy" "walkai_bucket_rw_policy" {
-  name        = "put_objects_walkai_bucket2"
+  name        = "put_objects_walkai_bucket-${var.name_suffix}"
   description = "Allow ECS tasks to read/write objects in the info bucket."
 
   policy = jsonencode({
@@ -250,7 +250,7 @@ resource "aws_iam_role_policy_attachment" "walkai_bucket_rw_policy_attachment" {
 }
 
 resource "aws_iam_policy" "k8s_cluster_credentials_secret_get_policy" {
-  name        = "secrets_manager_cluster_creds2"
+  name        = "secrets_manager_cluster_creds-${var.name_suffix}"
   description = "Allow get/describe the secret of the kubernetes cluster credentials."
 
   policy = jsonencode({
@@ -276,7 +276,7 @@ resource "aws_iam_role_policy_attachment" "k8s_cluster_credentials_secret_policy
 }
 
 resource "aws_iam_policy" "bootstrap_first_user_secret_get_policy" {
-  name        = "secrets_manager_bootstrap_email2"
+  name        = "secrets_manager_bootstrap_email-${var.name_suffix}"
   description = "Allow get/describe the secret of the first user email."
 
   policy = jsonencode({
@@ -301,7 +301,7 @@ resource "aws_iam_role_policy_attachment" "bootstrap_first_user_secret_policy_at
 }
 
 resource "aws_cloudwatch_log_group" "walkai_api_cloudwatch" {
-  name              = "/ecs/walkai-api2"
+  name              = "/ecs/walkai-api-${var.name_suffix}"
   retention_in_days = 30
   tags              = var.tags
 }
@@ -309,7 +309,7 @@ resource "aws_cloudwatch_log_group" "walkai_api_cloudwatch" {
 data "aws_region" "current" {}
 
 resource "aws_ecs_task_definition" "walkai_api_task" {
-  family                   = "walkai-api-task2"
+  family                   = "walkai-api-task-${var.name_suffix}"
   network_mode             = "awsvpc"
   requires_compatibilities = ["FARGATE"]
   cpu                      = "512"
@@ -350,7 +350,7 @@ resource "aws_ecs_task_definition" "walkai_api_task" {
 }
 
 resource "aws_ecs_service" "walkai_api_service" {
-  name                 = "walkai-api-service2"
+  name                 = "walkai-api-service-${var.name_suffix}"
   cluster              = aws_ecs_cluster.walkai.id
   task_definition      = aws_ecs_task_definition.walkai_api_task.arn
   desired_count        = 1

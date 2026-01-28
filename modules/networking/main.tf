@@ -73,7 +73,7 @@ resource "aws_nat_gateway" "public" {
   tags = merge(
     var.tags,
     {
-      Name = "walkai-nat-gateway2"
+      Name = "walkai-nat-gateway-${var.name_suffix}"
     }
   )
 }

@@ -35,25 +35,25 @@ resource "aws_dynamodb_table" "oauth_tx" {
 }
 
 resource "aws_s3_bucket" "app_client" {
-  bucket = var.bucket_name
+  bucket = local.bucket_name
   force_destroy = true
 
   tags = merge(
     var.tags,
     {
-      Name = var.bucket_name
+      Name = local.bucket_name
     }
   )
 }
 
 resource "aws_s3_bucket" "info_site" {
-  bucket = var.info_bucket_name
+  bucket = local.info_bucket_name
   force_destroy = true
 
   tags = merge(
     var.tags,
     {
-      Name = var.info_bucket_name
+      Name = local.info_bucket_name
     }
   )
 }
@@ -63,6 +63,11 @@ data "aws_vpc" "selected" {
 }
 
 locals {
+  db_identifier = "${var.db_identifier}-${var.name_suffix}"
+  bucket_name = "${var.bucket_name}-${var.name_suffix}"
+  info_bucket_name = "${var.info_bucket_name}-${var.name_suffix}"
+  k8s_cluster_credentials_secret_name = "${var.k8s_cluster_credentials_secret_name}-${var.name_suffix}"
+  bootstrap_first_user_secret_name = "${var.bootstrap_first_user_secret_name}-${var.name_suffix}"
   db_allowed_security_group_ids = [
     for sg in var.db_allowed_security_group_ids : trimspace(sg)
     if try(length(trimspace(sg)), 0) > 0
@@ -70,12 +75,12 @@ locals {
 }
 
 resource "aws_secretsmanager_secret" "k8s_cluster_credentials" {
-  name        = var.k8s_cluster_credentials_secret_name
+  name        = local.k8s_cluster_credentials_secret_name
   recovery_window_in_days = 0
   description = "Kubernetes cluster credentials."
 
   tags = merge(var.tags, {
-    Name = var.k8s_cluster_credentials_secret_name
+    Name = local.k8s_cluster_credentials_secret_name
   })
 }
 
@@ -90,12 +95,12 @@ resource "aws_secretsmanager_secret_version" "k8s_cluster_credentials" {
 
 
 resource "aws_secretsmanager_secret" "bootstrap_first_user" {
-  name        = var.bootstrap_first_user_secret_name
+  name        = local.bootstrap_first_user_secret_name
   recovery_window_in_days = 0
   description = "Bootstrap first user email for WalkAI."
 
   tags = merge(var.tags, {
-    Name = var.bootstrap_first_user_secret_name
+    Name = local.bootstrap_first_user_secret_name
   })
 }
 
@@ -109,13 +114,13 @@ resource "aws_secretsmanager_secret_version" "bootstrap_first_user" {
 
 resource "aws_db_subnet_group" "walkai" {
   count       = var.create_database ? 1 : 0
-  name_prefix = "${var.db_identifier}-subnets-"
+  name_prefix = "${local.db_identifier}-subnets-"
   subnet_ids  = var.private_subnet_ids
 
   tags = merge(
     var.tags,
     {
-      Name = "${var.db_identifier}-subnet-group"
+      Name = "${local.db_identifier}-subnet-group"
     }
   )
 
@@ -126,8 +131,8 @@ resource "aws_db_subnet_group" "walkai" {
 
 resource "aws_security_group" "walkai_db" {
   count       = var.create_database ? 1 : 0
-  name        = "${var.db_identifier}-sg"
-  description = "Security group for ${var.db_identifier}"
+  name        = "${local.db_identifier}-sg"
+  description = "Security group for ${local.db_identifier}"
   vpc_id      = var.vpc_id
 
   ingress {
@@ -148,7 +153,7 @@ resource "aws_security_group" "walkai_db" {
   tags = merge(
     var.tags,
     {
-      Name = "${var.db_identifier}-sg"
+      Name = "${local.db_identifier}-sg"
     }
   )
 }
@@ -163,13 +168,13 @@ resource "random_password" "db_master" {
 
 resource "aws_secretsmanager_secret" "db_master" {
   count       = var.create_database ? 1 : 0
-  name_prefix = "${var.db_identifier}-credentials-"
-  description = "Master credentials for ${var.db_identifier}"
+  name_prefix = "${local.db_identifier}-credentials-"
+  description = "Master credentials for ${local.db_identifier}"
 
   tags = merge(
     var.tags,
     {
-      Name = "${var.db_identifier}-credentials"
+      Name = "${local.db_identifier}-credentials"
     }
   )
 }
@@ -187,7 +192,7 @@ resource "aws_secretsmanager_secret_version" "db_master" {
 
 resource "aws_db_instance" "walkai" {
   count                  = var.create_database ? 1 : 0
-  identifier             = var.db_identifier
+  identifier             = local.db_identifier
   engine                 = "postgres"
   instance_class         = var.db_instance_class
   allocated_storage      = 20
@@ -207,7 +212,7 @@ resource "aws_db_instance" "walkai" {
   tags = merge(
     var.tags,
     {
-      Name = var.db_identifier
+      Name = local.db_identifier
     }
   )
 }

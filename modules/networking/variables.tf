@@ -29,3 +29,8 @@ variable "tags" {
   type        = map(string)
   default     = {}
 }
+
+variable "name_suffix" {
+  description = "Shared suffix appended to unique resource names."
+  type        = string
+}

@@ -42,7 +42,7 @@ variable "private_subnet_azs" {
 variable "db_identifier" {
   description = "Identifier for the storage PostgreSQL instance."
   type        = string
-  default     = "walkai-db2"
+  default     = "walkai-db"
 }
 
 variable "db_name" {
@@ -88,7 +88,7 @@ variable "k8s_cluster_token" {
 variable "k8s_cluster_credentials_secret_name" {
   description = "Kubernetes cluster credentials secret name."
   type        = string
-  default     = "walkai/k8s/cluster-creds2"
+  default     = "walkai/k8s/cluster-creds"
 }
 
 variable "bootstrap_first_user_email" {
@@ -99,5 +99,10 @@ variable "bootstrap_first_user_email" {
 variable "bootstrap_first_user_secret_name" {
   description = "Bootstrap secret name."
   type        = string
-  default     = "walkai/bootstrap/first_user2"
+  default     = "walkai/bootstrap/first_user"
+}
+
+variable "name_suffix" {
+  description = "Shared suffix appended to unique resource names."
+  type        = string
 }
