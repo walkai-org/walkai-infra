@@ -4,12 +4,6 @@ variable "region" {
   default     = "us-east-1"
 }
 
-variable "vpc_cidr_block" {
-  description = "CIDR block for the prod VPC."
-  type        = string
-  default     = "172.31.0.0/16"
-}
-
 variable "k8s_cluster_url" {
   description = "Kubernetes cluster url."
   type        = string

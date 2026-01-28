@@ -40,7 +40,6 @@ module "storage" {
   vpc_id            = data.terraform_remote_state.networking.outputs.vpc_id
   private_subnet_ids = local.private_subnet_ids
   private_subnet_azs = local.private_subnet_azs
-  vpc_cidr_block     = var.vpc_cidr_block
   db_allowed_security_group_ids = local.db_allowed_security_group_ids
   k8s_cluster_url = var.k8s_cluster_url
   k8s_cluster_token = var.k8s_cluster_token

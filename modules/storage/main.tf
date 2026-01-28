@@ -58,6 +58,10 @@ resource "aws_s3_bucket" "info_site" {
   )
 }
 
+data "aws_vpc" "selected" {
+  id = var.vpc_id
+}
+
 locals {
   db_allowed_security_group_ids = [
     for sg in var.db_allowed_security_group_ids : trimspace(sg)
@@ -131,7 +135,7 @@ resource "aws_security_group" "walkai_db" {
     from_port   = 5432
     to_port     = 5432
     protocol    = "tcp"
-    cidr_blocks = [var.vpc_cidr_block]
+    cidr_blocks = [data.aws_vpc.selected.cidr_block]
   }
 
   egress {

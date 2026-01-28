@@ -39,11 +39,6 @@ variable "private_subnet_azs" {
   type        = list(string)
 }
 
-variable "vpc_cidr_block" {
-  description = "CIDR block of the VPC for use in security group rules."
-  type        = string
-}
-
 variable "db_identifier" {
   description = "Identifier for the storage PostgreSQL instance."
   type        = string
