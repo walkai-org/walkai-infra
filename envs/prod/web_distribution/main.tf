@@ -25,10 +25,7 @@ data "terraform_remote_state" "load_balancer" {
 }
 
 locals {
-  app_client_bucket_name = coalesce(
-    var.app_client_bucket_name,
-    try(data.terraform_remote_state.storage.outputs.app_client_bucket_name, null)
-  )
+  app_client_bucket_name = data.terraform_remote_state.storage.outputs.app_client_bucket_name
 
   base_domain   = data.terraform_remote_state.load_balancer.outputs.base_domain
   web_domain    = "walkai.${local.base_domain}"
