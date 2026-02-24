@@ -7,6 +7,9 @@ permissions:
   id-token: write
   contents: read
 
+env:
+  TF_VAR_terraform_state_bucket: ${{ vars.AWS_S3_TERRAFORM_BUCKET }}
+
 jobs:
   load_balancer:
     runs-on: ubuntu-latest
@@ -32,7 +35,7 @@ jobs:
 
       - name: Terraform init
         working-directory: ${{ env.TERRAFORM_WORKING_DIR }}
-        run: terraform init -input=false -upgrade
+        run: terraform init -input=false -upgrade -reconfigure -backend-config="bucket=${{ vars.AWS_S3_TERRAFORM_BUCKET }}"
 
       - name: Terraform apply
         working-directory: ${{ env.TERRAFORM_WORKING_DIR }}
@@ -70,7 +73,7 @@ jobs:
 
       - name: Terraform init
         working-directory: ${{ env.TERRAFORM_WORKING_DIR }}
-        run: terraform init -input=false -upgrade
+        run: terraform init -input=false -upgrade -reconfigure -backend-config="bucket=${{ vars.AWS_S3_TERRAFORM_BUCKET }}"
 
       - name: Capture Storage outputs
         id: out
@@ -104,7 +107,7 @@ jobs:
 
       - name: Terraform init
         working-directory: ${{ env.TERRAFORM_WORKING_DIR }}
-        run: terraform init -input=false -upgrade
+        run: terraform init -input=false -upgrade -reconfigure -backend-config="bucket=${{ vars.AWS_S3_TERRAFORM_BUCKET }}"
 
       - name: Capture ECR outputs
         id: out
@@ -134,7 +137,7 @@ jobs:
 
       - name: Terraform init
         working-directory: ${{ env.TERRAFORM_WORKING_DIR }}
-        run: terraform init -input=false -upgrade
+        run: terraform init -input=false -upgrade -reconfigure -backend-config="bucket=${{ vars.AWS_S3_TERRAFORM_BUCKET }}"
 
       - name: Resolve env outputs
         id: out
@@ -203,7 +206,7 @@ jobs:
 
       - name: Terraform init
         working-directory: ${{ env.TERRAFORM_WORKING_DIR }}
-        run: terraform init -input=false -upgrade
+        run: terraform init -input=false -upgrade -reconfigure -backend-config="bucket=${{ vars.AWS_S3_TERRAFORM_BUCKET }}"
 
       - name: Terraform apply
         working-directory: ${{ env.TERRAFORM_WORKING_DIR }}
@@ -231,7 +234,7 @@ jobs:
 
       - name: Terraform init
         working-directory: ${{ env.TERRAFORM_WORKING_DIR }}
-        run: terraform init -input=false -upgrade
+        run: terraform init -input=false -upgrade -reconfigure -backend-config="bucket=${{ vars.AWS_S3_TERRAFORM_BUCKET }}"
 
       - name: Terraform apply
         working-directory: ${{ env.TERRAFORM_WORKING_DIR }}

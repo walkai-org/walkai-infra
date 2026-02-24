@@ -4,6 +4,11 @@ variable "region" {
   default     = "us-east-1"
 }
 
+variable "terraform_state_bucket" {
+  description = "S3 bucket name where Terraform states are stored."
+  type        = string
+}
+
 variable "tags" {
   description = "Tags to apply to the web distribution stack."
   type        = map(string)

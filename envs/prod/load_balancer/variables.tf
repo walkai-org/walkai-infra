@@ -4,6 +4,11 @@ variable "region" {
   default     = "us-east-1"
 }
 
+variable "terraform_state_bucket" {
+  description = "S3 bucket name where Terraform states are stored."
+  type        = string
+}
+
 variable "base_domain" {
   description = "Base domain name (e.g., walkaiorg.app)."
   type        = string

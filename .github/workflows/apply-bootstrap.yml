@@ -9,6 +9,9 @@ permissions:
   id-token: write
   contents: read
 
+env:
+  TF_VAR_terraform_state_bucket: ${{ vars.AWS_S3_TERRAFORM_BUCKET }}
+
 jobs:
   networking:
     runs-on: ubuntu-latest
@@ -38,7 +41,7 @@ jobs:
 
       - name: Terraform init
         working-directory: ${{ env.TERRAFORM_WORKING_DIR }}
-        run: terraform init -input=false -upgrade
+        run: terraform init -input=false -upgrade -reconfigure -backend-config="bucket=${{ vars.AWS_S3_TERRAFORM_BUCKET }}"
 
       - name: Terraform state debug
         working-directory: ${{ env.TERRAFORM_WORKING_DIR }}
@@ -75,7 +78,7 @@ jobs:
 
       - name: Terraform init
         working-directory: ${{ env.TERRAFORM_WORKING_DIR }}
-        run: terraform init -input=false -upgrade
+        run: terraform init -input=false -upgrade -reconfigure -backend-config="bucket=${{ vars.AWS_S3_TERRAFORM_BUCKET }}"
 
       - name: Terraform apply
         working-directory: ${{ env.TERRAFORM_WORKING_DIR }}
@@ -112,7 +115,7 @@ jobs:
 
       - name: Terraform init
         working-directory: ${{ env.TERRAFORM_WORKING_DIR }}
-        run: terraform init -input=false -upgrade
+        run: terraform init -input=false -upgrade -reconfigure -backend-config="bucket=${{ vars.AWS_S3_TERRAFORM_BUCKET }}"
 
       - name: Terraform apply
         working-directory: ${{ env.TERRAFORM_WORKING_DIR }}
@@ -147,7 +150,7 @@ jobs:
 
       - name: Terraform init
         working-directory: ${{ env.TERRAFORM_WORKING_DIR }}
-        run: terraform init -input=false -upgrade
+        run: terraform init -input=false -upgrade -reconfigure -backend-config="bucket=${{ vars.AWS_S3_TERRAFORM_BUCKET }}"
 
       - name: Terraform apply
         working-directory: ${{ env.TERRAFORM_WORKING_DIR }}
@@ -212,7 +215,7 @@ jobs:
 
       - name: Terraform init
         working-directory: ${{ env.TERRAFORM_WORKING_DIR }}
-        run: terraform init -input=false -upgrade
+        run: terraform init -input=false -upgrade -reconfigure -backend-config="bucket=${{ vars.AWS_S3_TERRAFORM_BUCKET }}"
 
       - name: Show hosted zone name servers
         working-directory: ${{ env.TERRAFORM_WORKING_DIR }}

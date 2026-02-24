@@ -7,6 +7,9 @@ permissions:
   id-token: write
   contents: read
 
+env:
+  TF_VAR_terraform_state_bucket: ${{ vars.AWS_S3_TERRAFORM_BUCKET }}
+
 jobs:
   web_distribution_destroy:
     runs-on: ubuntu-latest
@@ -27,7 +30,7 @@ jobs:
 
       - name: Terraform init
         working-directory: ${{ env.TERRAFORM_WORKING_DIR }}
-        run: terraform init -input=false -upgrade
+        run: terraform init -input=false -upgrade -reconfigure -backend-config="bucket=${{ vars.AWS_S3_TERRAFORM_BUCKET }}"
 
       - name: Terraform destroy
         working-directory: ${{ env.TERRAFORM_WORKING_DIR }}
@@ -53,7 +56,7 @@ jobs:
 
       - name: Terraform init
         working-directory: ${{ env.TERRAFORM_WORKING_DIR }}
-        run: terraform init -input=false -upgrade
+        run: terraform init -input=false -upgrade -reconfigure -backend-config="bucket=${{ vars.AWS_S3_TERRAFORM_BUCKET }}"
 
       - name: Terraform destroy
         working-directory: ${{ env.TERRAFORM_WORKING_DIR }}
@@ -79,7 +82,7 @@ jobs:
 
       - name: Terraform init
         working-directory: ${{ env.TERRAFORM_WORKING_DIR }}
-        run: terraform init -input=false -upgrade
+        run: terraform init -input=false -upgrade -reconfigure -backend-config="bucket=${{ vars.AWS_S3_TERRAFORM_BUCKET }}"
 
       - name: Terraform destroy
         working-directory: ${{ env.TERRAFORM_WORKING_DIR }}
@@ -108,7 +111,7 @@ jobs:
 
       - name: Terraform init
         working-directory: ${{ env.TERRAFORM_WORKING_DIR }}
-        run: terraform init -input=false -upgrade
+        run: terraform init -input=false -upgrade -reconfigure -backend-config="bucket=${{ vars.AWS_S3_TERRAFORM_BUCKET }}"
 
       - name: Terraform destroy
         working-directory: ${{ env.TERRAFORM_WORKING_DIR }}
@@ -137,7 +140,7 @@ jobs:
 
       - name: Terraform init
         working-directory: ${{ env.TERRAFORM_WORKING_DIR }}
-        run: terraform init -input=false -upgrade
+        run: terraform init -input=false -upgrade -reconfigure -backend-config="bucket=${{ vars.AWS_S3_TERRAFORM_BUCKET }}"
 
       - name: Terraform destroy
         working-directory: ${{ env.TERRAFORM_WORKING_DIR }}
@@ -164,7 +167,7 @@ jobs:
 
       - name: Terraform init
         working-directory: ${{ env.TERRAFORM_WORKING_DIR }}
-        run: terraform init -input=false -upgrade
+        run: terraform init -input=false -upgrade -reconfigure -backend-config="bucket=${{ vars.AWS_S3_TERRAFORM_BUCKET }}"
 
       - name: Terraform destroy
         working-directory: ${{ env.TERRAFORM_WORKING_DIR }}

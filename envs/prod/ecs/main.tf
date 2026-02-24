@@ -6,7 +6,7 @@ data "terraform_remote_state" "networking" {
   backend = "s3"
 
   config = {
-    bucket  = "walkai-terraform-state"
+    bucket  = var.terraform_state_bucket
     key     = "prod/networking/terraform.tfstate"
     region  = "us-east-1"
     encrypt = true
@@ -17,7 +17,7 @@ data "terraform_remote_state" "load_balancer" {
   backend = "s3"
 
   config = {
-    bucket  = "walkai-terraform-state"
+    bucket  = var.terraform_state_bucket
     key     = "prod/load_balancer/terraform.tfstate"
     region  = "us-east-1"
     encrypt = true
@@ -28,7 +28,7 @@ data "terraform_remote_state" "storage" {
   backend = "s3"
 
   config = {
-    bucket  = "walkai-terraform-state"
+    bucket  = var.terraform_state_bucket
     key     = "prod/storage/terraform.tfstate"
     region  = "us-east-1"
     encrypt = true
@@ -39,7 +39,7 @@ data "terraform_remote_state" "ecr" {
   backend = "s3"
 
   config = {
-    bucket  = "walkai-terraform-state"
+    bucket  = var.terraform_state_bucket
     key     = "prod/ecr/terraform.tfstate"
     region  = "us-east-1"
     encrypt = true

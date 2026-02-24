@@ -6,7 +6,7 @@ data "terraform_remote_state" "networking" {
   backend = "s3"
 
   config = {
-    bucket  = "walkai-terraform-state"
+    bucket  = var.terraform_state_bucket
     key     = "prod/networking/terraform.tfstate"
     region  = "us-east-1"
     encrypt = true
