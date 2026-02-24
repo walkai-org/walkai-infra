@@ -57,8 +57,10 @@ jobs:
       k8s_cluster_credentials_secret_name: ${{ steps.out.outputs.k8s_cluster_credentials_secret_name }}
       bootstrap_first_user_secret_name: ${{ steps.out.outputs.bootstrap_first_user_secret_name }}
       jwt_secret_name: ${{ steps.out.outputs.jwt_secret_name }}
+      github_app_secret_name: ${{ steps.out.outputs.github_app_secret_name }}
     env:
       TERRAFORM_WORKING_DIR: envs/prod/storage
+      TF_VAR_base_domain: ${{ vars.BASE_DOMAIN }}
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
@@ -87,6 +89,7 @@ jobs:
           echo "k8s_cluster_credentials_secret_name=$(terraform output -raw k8s_cluster_credentials_secret_name)" >> "$GITHUB_OUTPUT"
           echo "bootstrap_first_user_secret_name=$(terraform output -raw bootstrap_first_user_secret_name)" >> "$GITHUB_OUTPUT"
           echo "jwt_secret_name=$(terraform output -raw jwt_secret_name)" >> "$GITHUB_OUTPUT"
+          echo "github_app_secret_name=$(terraform output -raw github_app_secret_name)" >> "$GITHUB_OUTPUT"
 
   ecr_outputs:
     runs-on: ubuntu-latest
@@ -124,6 +127,7 @@ jobs:
       info_bucket_name: ${{ steps.out.outputs.info_bucket_name }}
     env:
       TERRAFORM_WORKING_DIR: envs/prod/storage
+      TF_VAR_base_domain: ${{ vars.BASE_DOMAIN }}
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
@@ -152,7 +156,6 @@ jobs:
       - name: Create .env from Secrets Manager
         env:
           SMTP_PASSWORD: ${{ secrets.SMTP_PASSWORD }}
-          GITHUB_CLIENT_SECRET: ${{ secrets.CLIENT_SECRET }}
 
         run: |
           secret_value=$(aws secretsmanager get-secret-value --secret-id "${{ steps.out.outputs.db_secret_arn }}" --query SecretString --output text)
@@ -167,9 +170,7 @@ jobs:
           JWT_SECRET_ID=${{ needs.storage_outputs.outputs.jwt_secret_name }}
           JWT_ALGO=HS256
           ACCESS_MIN=300
-          GITHUB_CLIENT_ID=Ov23liJh3cfjmR4dFTqY
-          GITHUB_CLIENT_SECRET=${GITHUB_CLIENT_SECRET}
-          GITHUB_REDIRECT_URI=https://api.walkai.${{ vars.BASE_DOMAIN }}/oauth/github/callback
+          GITHUB_APP_SECRET_ID=${{ needs.storage_outputs.outputs.github_app_secret_name }}
           FRONTEND_HOME=https://walkai.${{ vars.BASE_DOMAIN }}/app/
           CORS_ALLOW_ORIGINS=["https://walkai.${{ vars.BASE_DOMAIN }}","https://www.walkai.${{ vars.BASE_DOMAIN }}"]
           JOB_NAMESPACE=walkai

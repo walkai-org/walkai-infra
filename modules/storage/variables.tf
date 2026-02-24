@@ -96,6 +96,11 @@ variable "bootstrap_first_user_email" {
   type        = string
 }
 
+variable "base_domain" {
+  description = "Base domain used to build service callback URLs."
+  type        = string
+}
+
 variable "bootstrap_first_user_secret_name" {
   description = "Bootstrap secret name."
   type        = string
@@ -106,6 +111,12 @@ variable "jwt_secret_name" {
   description = "JWT HS256 secret name."
   type        = string
   default     = "walkai/auth/jwt_secret"
+}
+
+variable "github_app_secret_name" {
+  description = "GitHub App OAuth secret name."
+  type        = string
+  default     = "walkai/auth/github_app"
 }
 
 variable "name_suffix" {

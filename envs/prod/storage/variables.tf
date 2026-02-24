@@ -23,3 +23,8 @@ variable "bootstrap_first_user_email" {
   description = "First user email for bootstrap."
   type        = string
 }
+
+variable "base_domain" {
+  description = "Base domain for API callback URLs."
+  type        = string
+}

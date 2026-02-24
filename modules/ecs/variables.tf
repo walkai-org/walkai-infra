@@ -69,6 +69,11 @@ variable "jwt_secret_arn" {
   type        = string
 }
 
+variable "github_app_secret_arn" {
+  description = "ARN of the GitHub App OAuth secret."
+  type        = string
+}
+
 variable "name_suffix" {
   description = "Shared suffix appended to unique resource names."
   type        = string

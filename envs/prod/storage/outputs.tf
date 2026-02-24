@@ -53,6 +53,16 @@ output "jwt_secret_name" {
   value       = module.storage.jwt_secret_name
 }
 
+output "github_app_secret_arn" {
+  description = "GitHub App OAuth secret ARN."
+  value       = module.storage.github_app_secret_arn
+}
+
+output "github_app_secret_name" {
+  description = "GitHub App OAuth secret name."
+  value       = module.storage.github_app_secret_name
+}
+
 output "db_master_secret_arn" {
   description = "ARN of the Secrets Manager secret for the database master credentials."
   value       = module.storage.db_master_secret_arn

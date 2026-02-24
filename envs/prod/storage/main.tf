@@ -45,6 +45,7 @@ module "storage" {
   k8s_cluster_url = var.k8s_cluster_url
   k8s_cluster_token = var.k8s_cluster_token
   bootstrap_first_user_email = var.bootstrap_first_user_email
+  base_domain = var.base_domain
 
   tags = {
     Environment = "prod"

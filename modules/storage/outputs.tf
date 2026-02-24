@@ -83,6 +83,16 @@ output "jwt_secret_name" {
   value       = aws_secretsmanager_secret.jwt_hs256.name
 }
 
+output "github_app_secret_arn" {
+  description = "GitHub App OAuth secret ARN."
+  value       = aws_secretsmanager_secret.github_app.arn
+}
+
+output "github_app_secret_name" {
+  description = "GitHub App OAuth secret name."
+  value       = aws_secretsmanager_secret.github_app.name
+}
+
 output "db_instance_identifier" {
   description = "Identifier of the PostgreSQL instance."
   value       = try(aws_db_instance.walkai[0].id, null)
