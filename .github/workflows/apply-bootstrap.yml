@@ -168,7 +168,7 @@ jobs:
     runs-on: ubuntu-latest
     env:
       ECR_REPOSITORY: ${{ needs.ecr.outputs.repository_name }}
-      SOURCE_IMAGE: ${{ vars.BACKEND_IMAGE_URL }}
+      SOURCE_IMAGE: ghcr.io/scampanella1/walkai_api:latest
       IMAGE_TAG: latest
     steps:
       - name: Configure AWS credentials

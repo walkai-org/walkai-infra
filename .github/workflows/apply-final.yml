@@ -151,17 +151,17 @@ jobs:
 
       - name: Create .env from Secrets Manager
         env:
-          ACS_SMTP_PASSWORD: ${{ secrets.ACS_SMTP_PASSWORD }}
+          SMTP_PASSWORD: ${{ secrets.SMTP_PASSWORD }}
           GITHUB_CLIENT_SECRET: ${{ secrets.CLIENT_SECRET }}
 
         run: |
           secret_value=$(aws secretsmanager get-secret-value --secret-id "${{ steps.out.outputs.db_secret_arn }}" --query SecretString --output text)
           printf "DATABASE_URL=%s\n" "${secret_value}" > .env
           cat >> .env <<EOF
-          ACS_SMTP_HOST=${{ vars.ACS_SMTP_HOST }}
-          ACS_SMTP_PORT=${{ vars.ACS_SMTP_PORT }}
-          ACS_SMTP_USERNAME=${{ vars.ACS_SMTP_USERNAME }}
-          ACS_SMTP_PASSWORD=${ACS_SMTP_PASSWORD}
+          SMTP_HOST=${{ vars.SMTP_HOST }}
+          SMTP_PORT=${{ vars.SMTP_PORT }}
+          SMTP_USERNAME=${{ vars.SMTP_USERNAME }}
+          SMTP_PASSWORD=${SMTP_PASSWORD}
           MAIL_FROM=${{ vars.MAIL_FROM }}
           INVITE_BASE_URL=https://walkai.${{ vars.BASE_DOMAIN }}/invitations/
           JWT_SECRET_ID=${{ needs.storage_outputs.outputs.jwt_secret_name }}
@@ -254,8 +254,8 @@ jobs:
       APP_CLIENT_BUCKET: ${{ needs.storage_outputs.outputs.app_client_bucket_name }}
       CLOUDFRONT_DISTRIBUTION_ID: ${{ needs.web_distribution.outputs.cloudfront_distribution_id }}
       ALB_DNS_NAME: ${{ needs.load_balancer.outputs.alb_dns_name }}
-      FRONTEND_REPO: ${{ vars.FRONTEND_REPO }}
-      FRONTEND_REF: ${{ vars.FRONTEND_REF }}
+      FRONTEND_REPO: walkai-org/walkai-client
+      FRONTEND_REF: main
     steps:
       - name: Configure AWS credentials
         uses: aws-actions/configure-aws-credentials@v4
