@@ -102,6 +102,12 @@ variable "bootstrap_first_user_secret_name" {
   default     = "walkai/bootstrap/first_user"
 }
 
+variable "jwt_secret_name" {
+  description = "JWT HS256 secret name."
+  type        = string
+  default     = "walkai/auth/jwt_secret"
+}
+
 variable "name_suffix" {
   description = "Shared suffix appended to unique resource names."
   type        = string

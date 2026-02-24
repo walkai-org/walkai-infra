@@ -43,6 +43,16 @@ output "bootstrap_first_user_secret_name" {
   value       = module.storage.bootstrap_first_user_secret_name
 }
 
+output "jwt_secret_arn" {
+  description = "JWT HS256 secret ARN."
+  value       = module.storage.jwt_secret_arn
+}
+
+output "jwt_secret_name" {
+  description = "JWT HS256 secret name."
+  value       = module.storage.jwt_secret_name
+}
+
 output "db_master_secret_arn" {
   description = "ARN of the Secrets Manager secret for the database master credentials."
   value       = module.storage.db_master_secret_arn

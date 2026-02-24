@@ -300,6 +300,31 @@ resource "aws_iam_role_policy_attachment" "bootstrap_first_user_secret_policy_at
   policy_arn = aws_iam_policy.bootstrap_first_user_secret_get_policy.arn
 }
 
+resource "aws_iam_policy" "jwt_secret_get_policy" {
+  name        = "secrets_manager_jwt_hs256-${var.name_suffix}"
+  description = "Allow get/describe the JWT HS256 secret."
+
+  policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [
+      {
+        Sid    = "AllowReadJwtSecret"
+        Effect = "Allow"
+        Action = [
+          "secretsmanager:GetSecretValue",
+          "secretsmanager:DescribeSecret"
+        ]
+        Resource = var.jwt_secret_arn
+      }
+    ]
+  })
+}
+
+resource "aws_iam_role_policy_attachment" "jwt_secret_policy_attachment" {
+  role       = aws_iam_role.walkai_api_task_role.name
+  policy_arn = aws_iam_policy.jwt_secret_get_policy.arn
+}
+
 resource "aws_cloudwatch_log_group" "walkai_api_cloudwatch" {
   name              = "/ecs/walkai-api-${var.name_suffix}"
   retention_in_days = 30

@@ -66,6 +66,7 @@ module "ecs" {
   oauth_table_arn         = data.terraform_remote_state.storage.outputs.oauth_table_arn
   k8s_cluster_credentials_secret_arn = data.terraform_remote_state.storage.outputs.k8s_cluster_credentials_secret_arn
   bootstrap_first_user_secret_arn = data.terraform_remote_state.storage.outputs.bootstrap_first_user_secret_arn
+  jwt_secret_arn = data.terraform_remote_state.storage.outputs.jwt_secret_arn
 
   depends_on = [
     data.terraform_remote_state.networking,

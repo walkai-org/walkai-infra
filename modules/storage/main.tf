@@ -68,6 +68,7 @@ locals {
   info_bucket_name = "${var.info_bucket_name}-${var.name_suffix}"
   k8s_cluster_credentials_secret_name = "${var.k8s_cluster_credentials_secret_name}-${var.name_suffix}"
   bootstrap_first_user_secret_name = "${var.bootstrap_first_user_secret_name}-${var.name_suffix}"
+  jwt_secret_name = "${var.jwt_secret_name}-${var.name_suffix}"
   db_allowed_security_group_ids = [
     for sg in var.db_allowed_security_group_ids : trimspace(sg)
     if try(length(trimspace(sg)), 0) > 0
@@ -110,6 +111,25 @@ resource "aws_secretsmanager_secret_version" "bootstrap_first_user" {
   secret_string = jsonencode({
     email = var.bootstrap_first_user_email
   })
+}
+
+resource "random_bytes" "jwt_secret" {
+  length = 32
+}
+
+resource "aws_secretsmanager_secret" "jwt_hs256" {
+  name                    = local.jwt_secret_name
+  recovery_window_in_days = 0
+  description             = "JWT HS256 secret for WalkAI API."
+
+  tags = merge(var.tags, {
+    Name = local.jwt_secret_name
+  })
+}
+
+resource "aws_secretsmanager_secret_version" "jwt_hs256" {
+  secret_id     = aws_secretsmanager_secret.jwt_hs256.id
+  secret_string = random_bytes.jwt_secret.hex
 }
 
 resource "aws_db_subnet_group" "walkai" {

@@ -64,6 +64,11 @@ variable "bootstrap_first_user_secret_arn" {
   type = string
 }
 
+variable "jwt_secret_arn" {
+  description = "ARN of the JWT HS256 secret."
+  type        = string
+}
+
 variable "name_suffix" {
   description = "Shared suffix appended to unique resource names."
   type        = string

@@ -73,6 +73,16 @@ output "bootstrap_first_user_secret_name" {
   value       = aws_secretsmanager_secret.bootstrap_first_user.name
 }
 
+output "jwt_secret_arn" {
+  description = "JWT HS256 secret ARN."
+  value       = aws_secretsmanager_secret.jwt_hs256.arn
+}
+
+output "jwt_secret_name" {
+  description = "JWT HS256 secret name."
+  value       = aws_secretsmanager_secret.jwt_hs256.name
+}
+
 output "db_instance_identifier" {
   description = "Identifier of the PostgreSQL instance."
   value       = try(aws_db_instance.walkai[0].id, null)

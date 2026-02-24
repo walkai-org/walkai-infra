@@ -56,6 +56,7 @@ jobs:
       cluster_cache_table_name: ${{ steps.out.outputs.cluster_cache_table_name }}
       k8s_cluster_credentials_secret_name: ${{ steps.out.outputs.k8s_cluster_credentials_secret_name }}
       bootstrap_first_user_secret_name: ${{ steps.out.outputs.bootstrap_first_user_secret_name }}
+      jwt_secret_name: ${{ steps.out.outputs.jwt_secret_name }}
     env:
       TERRAFORM_WORKING_DIR: envs/prod/storage
     steps:
@@ -85,6 +86,7 @@ jobs:
           echo "cluster_cache_table_name=$(terraform output -raw cluster_cache_table_name)" >> "$GITHUB_OUTPUT"
           echo "k8s_cluster_credentials_secret_name=$(terraform output -raw k8s_cluster_credentials_secret_name)" >> "$GITHUB_OUTPUT"
           echo "bootstrap_first_user_secret_name=$(terraform output -raw bootstrap_first_user_secret_name)" >> "$GITHUB_OUTPUT"
+          echo "jwt_secret_name=$(terraform output -raw jwt_secret_name)" >> "$GITHUB_OUTPUT"
 
   ecr_outputs:
     runs-on: ubuntu-latest
@@ -150,7 +152,6 @@ jobs:
       - name: Create .env from Secrets Manager
         env:
           ACS_SMTP_PASSWORD: ${{ secrets.ACS_SMTP_PASSWORD }}
-          JWT_SECRET: ${{ secrets.JWT_SECRET }}
           GITHUB_CLIENT_SECRET: ${{ secrets.CLIENT_SECRET }}
 
         run: |
@@ -163,7 +164,7 @@ jobs:
           ACS_SMTP_PASSWORD=${ACS_SMTP_PASSWORD}
           MAIL_FROM=${{ vars.MAIL_FROM }}
           INVITE_BASE_URL=https://walkai.${{ vars.BASE_DOMAIN }}/invitations/
-          JWT_SECRET=${JWT_SECRET}
+          JWT_SECRET_ID=${{ needs.storage_outputs.outputs.jwt_secret_name }}
           JWT_ALGO=HS256
           ACCESS_MIN=300
           GITHUB_CLIENT_ID=Ov23liJh3cfjmR4dFTqY
